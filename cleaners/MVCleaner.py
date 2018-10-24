@@ -4,14 +4,15 @@ import os
 import sys
 
 """
-Deleting missing values: MVCleaner(method = 'delete')
-Imuputing missing values: MVCleaner(method = 'impute', num = 'mean', cat = 'mode')
+Deleting missing values: MVCleaner(method='delete')
+Imuputing missing values: MVCleaner(method='impute', num='mean', cat='mode')
 
 """
 class MVCleaner(object):
     def __init__(self, method='delete', **kwargs):
         self.method = method
         self.kwargs = kwargs
+        self.impute = None
         if method == 'impute':
             if 'num' not in kwargs or 'cat' not in kwargs:
                 print("Must give imputation method for numerical and categorical data")
@@ -23,36 +24,38 @@ class MVCleaner(object):
     def detect(self, df):
         return df.isnull()
 
-    def repair(self, df, neighbors=3):
+    def fit(self, df):
+        if self.method == 'impute':
+            num_method = self.kwargs['num']
+            cat_method = self.kwargs['cat']
+            num_df = df.select_dtypes(include='number')
+            cat_df = df.select_dtypes(exclude='number')
+            if num_method == "mean":
+                num_imp = num_df.mean()
+            if num_method == "median":
+                num_imp = num_df.median()
+            if num_method == "mode":
+                num_imp = num_df.mode().iloc[0]
+
+            if cat_method == "mode":
+                cat_imp = cat_df.mode().iloc[0]
+            if cat_method == "dummy":
+                cat_imp = ['missing'] * len(cat_df.columns)
+                cat_imp = pd.Series(cat_imp, index=cat_df.columns)
+            self.impute = pd.concat([num_imp, cat_imp], axis=0)
+
+    def repair(self, df):
         if self.method == 'delete':
             df_clean = df.dropna()
 
         if self.method == 'impute':
-            num_method = self.kwargs['num']
-            cat_method = self.kwargs['cat']
-
-            num_df = df.select_dtypes(include='number')
-            cat_df = df.select_dtypes(exclude='number')
-            if num_method == "mean":
-                num_df_clean = num_df.fillna(num_df.mean())
-            if num_method == "median":
-                num_df_clean = num_df.fillna(num_df.median())
-            if num_method == "mode":
-                num_df_clean = num_df.apply(lambda x: x.fillna(x.value_counts().index[0]))
-            if num_method == 'knn':
-                import fancyimpute
-                num_df_clean = pd.DataFrame(fancyimpute.KNN(neighbors).fit_transform(num_df))
-                num_df_clean.columns = df.columns
-            
-            if cat_method == "mode":
-                cat_df_clean = cat_df.apply(lambda x: x.fillna(x.value_counts().index[0]))
-            if cat_method == "dummy":
-                cat_df_clean = cat_df.fillna('missing')
-
-            df_clean = pd.concat([num_df_clean, cat_df_clean], axis=1).reindex(columns = df.columns)
+            df_clean = df.fillna(value=self.impute)
         return df_clean
 
-    def clean(self, df, neighbors=3):
+    def clean(self, df):
+        if self.method == 'impute' and self.impute is None:
+            print('Must fit before clean.')
+            sys.exit()
         mv_mat = self.detect(df)
-        df_clean = self.repair(df, neighbors=neighbors)
+        df_clean = self.repair(df)
         return df_clean, mv_mat

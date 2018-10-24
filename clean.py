@@ -7,6 +7,7 @@ import os
 import argparse
 import sys
 import matplotlib.pyplot as plt
+import utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mv', default=False, action='store_true')
@@ -15,37 +16,36 @@ parser.add_argument('--dup', default=False, action='store_true')
 parser.add_argument('--summary', default=False, action='store_true')
 parser.add_argument('--dataset', default=None)
 
-def get_dir(dataset, error_type, source='raw'):
-    data_dir = os.path.join(root_dir, dataset['data_dir'])
-    file_dir = os.path.join(data_dir, 'raw', 'dirty.csv')
+# def get_dir(dataset, error_type, source='raw'):
+#     data_dir = os.path.join(root_dir, dataset['data_dir'])
+#     file_dir = os.path.join(data_dir, 'raw', 'dirty_train.csv')
 
-    if source == 'delete_mv':
-        file_dir = os.path.join(data_dir, 'missing_values', 'clean_mv_delete.csv')
-        if not os.path.exists(file_dir):
-            print('Must first clean missing values.')
-            sys.exit()
+#     if source == 'delete_mv':
+#         file_dir = os.path.join(data_dir, 'missing_values', 'clean_mv_delete.csv')
+#         if not os.path.exists(file_dir):
+#             print('Must first clean missing values.')
+#             sys.exit()
 
-    if source == 'clean_incon':
-        file_dir = os.path.join(data_dir, 'inconsistency', 'clean.csv')
-        if not os.path.exists(file_dir):
-            print('Must first clean inconsistency.')
-            sys.exit()
+#     if source == 'clean_incon':
+#         file_dir = os.path.join(data_dir, 'inconsistency', 'clean.csv')
+#         if not os.path.exists(file_dir):
+#             print('Must first clean inconsistency.')
+#             sys.exit()
 
-    save_dir = os.path.join(data_dir, error_type)
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-    return data_dir, file_dir, save_dir
-
-def get_df(dataset, file_dir):
-    df = pd.read_csv(file_dir)
-    categories = dataset['categorical_variables']
-    for cat in categories:
-        df[cat] = df[cat].astype(str)
-    return df
+#     save_dir = os.path.join(data_dir, error_type)
+#     if not os.path.exists(save_dir):
+#         os.makedirs(save_dir)
+#     return data_dir, file_dir, save_dir
 
 def clean_mv(dataset):
-    data_dir, file_dir, save_dir = get_dir(dataset, 'missing_values')
-    dirty_data = get_df(dataset, file_dir)
+    train_dir = utils.get_dir(dataset, 'raw', 'dirty_train.csv')
+    val_dir = utils.get_dir(dataset, 'raw', 'dirty_val.csv')
+    test_dir = utils.get_dir(dataset, 'raw', 'dirty_test.csv')
+    save_dir = utils.get_dir(dataset, 'missing_values', create_folder=True)
+
+    dirty_train = utils.get_df(dataset, train_dir)
+    dirty_val = utils.get_df(dataset, val_dir)
+    dirty_test = utils.get_df(dataset, test_dir)
 
     num_methods = ['mean', 'median', 'mode']
     cat_methods = ['mode', 'dummy']
@@ -53,23 +53,30 @@ def clean_mv(dataset):
     cleaners.append(MVCleaner(method="delete"))
 
     for cleaner in cleaners:
-        clean_data, mv_mat = cleaner.clean(dirty_data)
-        data_save_dir = os.path.join(save_dir, 'clean_mv_{}.csv'.format(cleaner.tag))
-        clean_data.to_csv(data_save_dir, index=False)
+        cleaner.fit(dirty_train)
+        clean_train, ind_train = cleaner.clean(dirty_train)
+        clean_val, ind_val = cleaner.clean(dirty_val)
+        clean_test, ind_test = cleaner.clean(dirty_test)
+        train_save_dir = os.path.join(save_dir, 'clean_train_mv_{}.csv'.format(cleaner.tag))
+        val_save_dir = os.path.join(save_dir, 'clean_val_mv_{}.csv'.format(cleaner.tag))
+        test_save_dir = os.path.join(save_dir, 'clean_test_mv_{}.csv'.format(cleaner.tag))
+
+        clean_train.to_csv(train_save_dir, index=False)
+        clean_val.to_csv(val_save_dir, index=False)
+        clean_test.to_csv(test_save_dir, index=False)
         print('{} finished.'.format(cleaner.tag))
 
-    mat_save_dir = os.path.join(save_dir, 'indicator.csv')
-    dirty_save_dir = os.path.join(save_dir, 'dirty.csv')
-    dirty_data.to_csv(dirty_save_dir, index=False)
-    mv_mat.to_csv(mat_save_dir, index=False)
-    
+    ind_train.to_csv(os.path.join(save_dir, 'indicator_train.csv'), index=False)
+    ind_val.to_csv(os.path.join(save_dir, 'indicator_val.csv'), index=False)
+    ind_test.to_csv(os.path.join(save_dir, 'indicator_test.csv'), index=False)
+
 def clean_outliers(dataset):
     if 'mv' in dataset['error_types']:
         data_dir, file_dir, save_dir = get_dir(dataset, "outliers", 'delete_mv')
     else:
         data_dir, file_dir, save_dir = get_dir(dataset, "outliers")
     
-    dirty_data = get_df(dataset, file_dir)
+    dirty_data = utils.get_df(dataset, file_dir)
     detect_methods = ["SD", "IQR", "iso_forest"]
     
     num_methods = ['mean', 'median', 'mode']
@@ -100,7 +107,7 @@ def clean_duplicates(dataset):
     else:
         data_dir, file_dir, save_dir = get_dir(dataset, "duplicates")
 
-    dirty_data = get_df(dataset, file_dir)
+    dirty_data = utils.get_df(dataset, file_dir)
     cleaner = DuplicatesCleaner()
     clean_data, is_dup = cleaner.clean(dirty_data, dataset['key_columns'])
     
@@ -124,7 +131,7 @@ if __name__ == '__main__':
         if args.dataset not in names:
             print('Dataset does not exist.')
             sys.exit(1)
-        selected_datasets = [dt for dt in datasets if dt['data_dir'] == args.dataset]
+        selected_datasets = [utils.get_dataset(args.dataset)]
 
     for dataset in selected_datasets:
         if args.mv and 'mv' in dataset['error_types']:

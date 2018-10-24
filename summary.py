@@ -4,18 +4,12 @@ import config
 import os
 import sys
 import re
+import utils
 
 def get_dir(dataset, error_type, source='raw'):
     data_dir = os.path.join(root_dir, dataset['data_dir'])
     save_dir = os.path.join(data_dir, error_type)
     return save_dir
-
-def get_df(dataset, file_dir):
-    df = pd.read_csv(file_dir)
-    categories = dataset['categorical_variables']
-    for cat in categories:
-        df[cat] = df[cat].astype(str)
-    return df
 
 def count_error(indicator, error_type):
     N, m = indicator.shape
@@ -23,7 +17,6 @@ def count_error(indicator, error_type):
     num_error = is_error.sum()
     count_summary = 'Number of {}: {}/{} ({:.2%})'.format(error_type, num_error, N, num_error/N)
     return count_summary
-
 
 root_dir = config.root_dir
 datasets = config.datasets
@@ -44,7 +37,7 @@ for dataset in datasets:
 
         if error == 'out':
             summary += '- Outliers:\n'
-            save_dir = get_dir(dataset, 'outliers')
+            save_dir = utils.get_dir(dataset, 'outliers')
             regex = re.compile(r'indicator')
             filenames = filter(regex.search, os.listdir(save_dir))
 

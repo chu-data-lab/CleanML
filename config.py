@@ -1,94 +1,121 @@
 # Datasets
 root_dir = 'datasets'
+result_dir = 'result.json'
 
 KDD = {
     "data_dir": "KDD",
-    "error_types": ['mv', 'out'],
+    "error_types": ['missing_values', 'outliers'],
     "label": 'is_exciting_20',
-    "categorical_variables":['is_exciting_20']
+    "ml_task": "classification",
+    "class_imbalance": True,
+    "categorical_variables":['is_exciting_20'],
 }
 
 Citation = {
     "data_dir": "Citation",
-    "error_types": ['mv', 'dup'],
-    "categorical_variables":[],
-    "dup_ground_truth": True
+    "error_types": ['missing_values', 'duplicates', 'inconsistency'],
+    "label":"venue",
+    "ml_task": "classification",
+    "text_variables":["title", "authors"],
+    "drop_variables":["id"],
+    "manual_clean_duplicates": True
 }
 
 Marketing = {
     "data_dir": "Marketing",
-    "error_types": ['mv'],
+    "error_types": ['missing_values'],
     "label": 'Income',
-    "categorical_variables":[]
+    "ml_task": "classification"
 }
 
 Airbnb = {
     "data_dir": "Airbnb",
-    "error_types": ['mv', 'out', 'dup'],
+    "error_types": ['missing_values', 'outliers', 'duplicates'],
     "label": 'Rating',
-    "categorical_variables":[],
+    "ml_task": "regression",
     'key_columns': ['latitude', 'longitude'],
-    "dup_ground_truth": False
+    "manual_clean_duplicates": False
 }
 
 DfD = {
     "data_dir": "DfD",
-    "error_types": ['incon', 'mislabel'],
-    "categorical_variables":[]
+    "error_types": ['inconsistency', 'mislabel'],
+    "categorical_variables":[],
+    "label": "Donate",
+    "ml_task": "classification"
 }
 
 Titanic = {
     "data_dir": "Titanic",
-    "error_types": ['mv'],
+    "error_types": ['missing_values'],
     "label": "Survived",
-    "categorical_variables":["Survived"]
+    "categorical_variables":["Survived"],
+    "ml_task": "classification"
 }
 
 EGG = {
     "data_dir": "EGG",
-    "error_types": ['out'],
+    "error_types": ['outliers'],
     'label':'Eye',
-    "categorical_variables":['Eye']
+    "categorical_variables":['Eye'],
+    "ml_task": "classification"
 }
 
 USCensus = {
     "data_dir": "USCensus",
-    "error_types": ['mv'],
+    "error_types": ['missing_values'],
     "label": 'Income',
-    "categorical_variables":[]
+    "ml_task": "classification"
 }
 
 Restaurant = {
     "data_dir": "Restaurant",
-    "error_types": ['mv', 'dup','incon'],
-    "categorical_variables":[],
+    "error_types": ['missing_values', 'duplicates','inconsistency'],
+    "label": "priceRange",
+    "ml_task": "classification",
+    "text_variables": ["name", "streetAddress"],
     "key_columns": ["telephone"],
-    "dup_ground_truth": False
+    "manual_clean_duplicates": False
 }
 
 Credit = {
     "data_dir": "Credit",
-    "error_types": ['mv', 'out'],
+    "error_types": ['missing_values', 'outliers'],
     "label": "SeriousDlqin2yrs",
-    "categorical_variables":["SeriousDlqin2yrs"]
+    "categorical_variables":["SeriousDlqin2yrs"],
+    "ml_task": "classification"
 }
 
 Sensor = {
     "data_dir": "Sensor",
-    "error_types": ['mv', 'out'],
-    "categorical_variables": ['moteid']
+    "error_types": ['outliers'],
+    "categorical_variables": ['moteid'],
+    "date_variable": ["date", "time"],
+    "label": 'moteid',
+    "ml_task": "classification"
 }
 
 Movie = {
     "data_dir": "Movie",
-    "error_types": ['dup', 'incon'],
+    "error_types": ['duplicates', 'inconsistency'],
     "key_columns": ["title", "year"],
-    "dup_ground_truth": False,
-    "categorical_variables": []
+    "categorical_variables": ["genres"],
+    "text_variables": ["title"],
+    "label": "genres",
+    "ml_task": "classification",
+    "manual_clean_duplicates": False
 }
 
-datasets = [KDD, Citation, Marketing, Airbnb, DfD, Titanic, 
-        EGG, USCensus, Restaurant, Credit, Sensor, Movie]
+Food = {
+    "data_dir": "Food",
+    "error_types": ['inconsistency'],
+    "categorical_variables": [],
+    "label": "Results",
+    "ml_task": "classification"
+}
+
+datasets = [KDD, Citation, Marketing, Airbnb, Titanic, 
+        EGG, USCensus, Restaurant, Credit, Sensor, Food, Movie]
 
 
 

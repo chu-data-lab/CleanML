@@ -12,7 +12,7 @@ class MVCleaner(object):
     def __init__(self, method='delete', **kwargs):
         self.method = method
         self.kwargs = kwargs
-        self.impute = None
+        self.is_fit = False
         if method == 'impute':
             if 'num' not in kwargs or 'cat' not in kwargs:
                 print("Must give imputation method for numerical and categorical data")
@@ -43,6 +43,7 @@ class MVCleaner(object):
                 cat_imp = ['missing'] * len(cat_df.columns)
                 cat_imp = pd.Series(cat_imp, index=cat_df.columns)
             self.impute = pd.concat([num_imp, cat_imp], axis=0)
+        self.is_fit = True
 
     def repair(self, df):
         if self.method == 'delete':
@@ -53,7 +54,7 @@ class MVCleaner(object):
         return df_clean
 
     def clean(self, df):
-        if self.method == 'impute' and self.impute is None:
+        if not self.is_fit:
             print('Must fit before clean.')
             sys.exit()
         mv_mat = self.detect(df)

@@ -6,21 +6,33 @@ import sys
 import re
 import utils
 
-def get_dir(dataset, error_type, source='raw'):
-    data_dir = os.path.join(root_dir, dataset['data_dir'])
-    save_dir = os.path.join(data_dir, error_type)
-    return save_dir
+def get_indicator_dirs(dataset, error_type):
+    save_dir = utils.get_dir(dataset, error_type)
+    regex = re.compile(r'indicator.*train')
+    filenames = filter(regex.search, os.listdir(save_dir))
+    indicator_dirs = [utils.get_dir(dataset, error_type, file) for file in filenames]
+    return indicator_dirs
 
-def count_error(indicator, error_type):
+def count_error(indicator_dir, error_type):
+    filename = os.path.split(indicator_dir)[-1][10:-4]
+    indicator = pd.read_csv(indicator_dir)
     N, m = indicator.shape
-    is_error = indicator.any(axis = 1)
-    num_error = is_error.sum()
-    count_summary = 'Number of {}: {}/{} ({:.2%})'.format(error_type, num_error, N, num_error/N)
+    n_error_record = indicator.any(axis = 1).sum()
+    error_rate_record = n_error_record / N
+
+    if m > 1:
+        n_entry = N * m
+        n_error_entry = np.sum(indicator.values)
+        error_rate_entry = n_error_entry / n_entry
+        count_summary = 'Number of {} in {}: {}/{} ({:.2%}) entries, {}/{} ({:.2%}) records'\
+                    .format(error_type, filename, n_error_entry, n_entry, error_rate_entry, n_error_record, N, error_rate_record)
+    else:
+        count_summary = 'Number of {} in {}: {}/{} ({:.2%}) records'\
+                    .format(error_type, filename, n_error_record, N, error_rate_record)
     return count_summary
 
-root_dir = config.root_dir
-datasets = config.datasets
 
+datasets = config.datasets
 summary = "The summary of error in each dataset:\n\n"
 
 for dataset in datasets:
@@ -28,42 +40,10 @@ for dataset in datasets:
     summary += '[{}]\n'.format(dataset['data_dir'])
 
     for error in dataset['error_types']:
-        if error == 'mv':
-            summary += '- Missing Values:\n'
-            save_dir = get_dir(dataset, 'missing_values')
-            indicator_dir = os.path.join(save_dir, 'indicator.csv')
-            indicator = pd.read_csv(indicator_dir)
-            summary += '  {}\n'.format(count_error(indicator, 'Missing Values'))
-
-        if error == 'out':
-            summary += '- Outliers:\n'
-            save_dir = utils.get_dir(dataset, 'outliers')
-            regex = re.compile(r'indicator')
-            filenames = filter(regex.search, os.listdir(save_dir))
-
-            for filename in filenames:
-                name, _ = filename.split('.')
-                _, method = name.split('_', 1)
-                
-                indicator_dir = os.path.join(save_dir, filename)
-                summary += '  {}\n'.format(count_error(indicator, 'Outliers ({})'.format(method)))
-
-        if error == 'dup':
-            summary += '- Duplicates:\n'
-            save_dir = get_dir(dataset, 'duplicates')
-            indicator_dir = os.path.join(save_dir, 'indicator.csv')
-            indicator = pd.read_csv(indicator_dir)
-            summary += '  {}\n'.format(count_error(indicator, 'Duplicates'))
-
-        if error == 'incon':
-            summary += '- Inconsistency:\n'
-            save_dir = get_dir(dataset, 'inconsistency')
-            dirty_dir = os.path.join(save_dir, 'dirty.csv')
-            clean_dir = os.path.join(save_dir, 'clean.csv')
-            dirty = pd.read_csv(dirty_dir)
-            clean = pd.read_csv(clean_dir)
-            indicator = (dirty.values != clean.values)
-            summary += '  {}\n'.format(count_error(indicator, 'Inconsistency'))
+        summary += '- {}:\n'.format(error)
+        indicator_dirs = get_indicator_dirs(dataset, error)
+        for indicator_dir in indicator_dirs:
+            summary += '  {}\n'.format(count_error(indicator_dir, error))
         
 print(summary)
 

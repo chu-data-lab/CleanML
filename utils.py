@@ -2,6 +2,8 @@ import pandas as pd
 import os
 import config
 import sys
+import json
+import model
 
 def get_dataset(name):
     """
@@ -14,7 +16,7 @@ def get_dataset(name):
         sys.exit()
     return dataset[0]
 
-def get_df(dataset, file_dir):
+def load_df(dataset, file_dir):
     """
     Get pandas data frame and preprocess categorical variables
 
@@ -25,10 +27,24 @@ def get_df(dataset, file_dir):
         df: pandas data frame
     """
     df = pd.read_csv(file_dir)
-    categories = dataset['categorical_variables']
-    for cat in categories:
-        df[cat] = df[cat].astype(str)
+    if 'categorical_variables' in dataset.keys():
+        categories = dataset['categorical_variables']
+        for cat in categories:
+            df[cat] = df[cat].astype(str)
     return df
+
+def load_dfs(dataset, file_dir_pfx):
+    train_dir = file_dir_pfx + '_train.csv'
+    test_dir = file_dir_pfx + '_test.csv'
+    train = load_df(dataset, train_dir)
+    test = load_df(dataset, test_dir)
+    return train, test
+
+def save_dfs(train, test, save_dir_pfx):
+    train_save_dir = save_dir_pfx + '_train.csv'
+    test_save_dir = save_dir_pfx + '_test.csv'
+    train.to_csv(train_save_dir, index=False)
+    test.to_csv(test_save_dir, index=False)
 
 def get_dir(dataset, folder=None, file=None, create_folder=False):
     """
@@ -57,3 +73,40 @@ def get_dir(dataset, folder=None, file=None, create_folder=False):
     
     file_dir = os.path.join(folder_dir, file)
     return file_dir
+
+def save_result(key, res):
+    param, train_acc, val_acc, test_acc = res
+
+    result_dir = config.result_dir
+    if os.path.exists(result_dir):
+        result = json.load(open(result_dir, 'r'))
+    else:
+        result = {}
+
+    if key in result.keys():
+        best_param, best_train_acc, best_val_acc, best_test_acc = result[key]
+    else:
+        best_val_acc = float('-inf')
+
+    if val_acc > best_val_acc:
+        result[key] = res
+    json.dump(result, open('./result.json', 'w'))
+    
+def get_model(model_name):
+    models = model.models
+    mod = [m for m in models if m['name'] == model_name ]
+    if len(mod) == 0:
+        print("Invalid model name: {}".format(model_name))
+        sys.exit()
+    return mod[0]
+
+
+
+
+
+
+
+
+
+
+

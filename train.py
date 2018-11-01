@@ -2,80 +2,51 @@ import numpy as np
 import pandas as pd
 import argparse
 import config
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder
 import utils
 import sys
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+from sklearn.preprocessing import LabelEncoder
 
-def train_evaluate(model, X_train, y_train, X_val, y_val, X_test, y_test):
-    model.fit(X_train, y_train)
-    train_acc = model.score(X_train, y_train)
-    val_acc = model.score(X_val, y_val)
-    test_acc = model.score(X_test, y_test)
-    return train_acc, val_acc, test_acc
+def preprocess(dataset, X, y):
+    if "drop_variables" in dataset.keys():
+        X.drop(columns=dataset['drop_variables'], inplace=True)
 
-def tune_hyper(models, X_train, y_train, X_val, y_val, X_test, y_test):
-    train_accs = []
-    val_accs = []
-    best_acc = 0
-    best_model = None
+    X = pd.get_dummies(X, drop_first=True).values
+    if dataset['ml_task'] == 'classification':
+        le = LabelEncoder()
+        y = le.fit_transform(y.values)
+    return X, y
 
-    for model in models:
-        train_acc, val_acc, _ = \
-            train_evaluate(model, X_train, y_train, X_val, y_val, X_test, y_test)
-        train_accs.append(train_acc)
-        val_accs.append(val_acc)
+def load_data(dataset, file_dir_predix):
+    train, test = utils.load_dfs(dataset, file_dir_predix)
+    n_tr, n_te = train.shape[0], test.shape[0]
+    data = pd.concat([train, test], axis=0)
+    label = dataset['label']
+    features = [v for v in data.columns if not v == label]
+    X = data.loc[:, features]
+    y = data.loc[:, label]
+    X, y = preprocess(dataset, X, y)
 
-        if val_acc > best_acc:
-            best_acc = val_acc
-            best_model = model
+    X_train, y_train = X[:n_tr, :], y[:n_tr]
+    X_test, y_test = X[n_tr:], y[n_tr:]
+    return X_train, y_train, X_test, y_test
 
-    test_acc = best_model.score(X_test, y_test)
-    return best_model, best_acc, train_accs, val_accs, test_acc
+def parse_searcher(searcher):
+    train_accs = searcher.cv_results_['mean_train_score']
+    val_accs = searcher.cv_results_['mean_test_score']
+    best_idx = searcher.best_index_ 
+    best_params = searcher.best_params_
+    train_acc, val_acc = train_accs[best_idx], val_accs[best_idx]
+    best_model = searcher.best_estimator_
+    return best_model, best_params, train_acc, val_acc
 
-def load_data(dataset, error_type, file):
-    data_dir = utils.get_dir(dataset, error_type, file)
-    data = utils.get_df(dataset, data_dir)
-    label = [dataset['label']]
-    features = [v for v in data.columns if not v == dataset['label']]
-    X = pd.DataFrame(data, columns=features)
-    y = pd.DataFrame(data, columns=label)
-    X = pd.get_dummies(X, drop_first=True)
-    y = pd.get_dummies(y, drop_first=True)
-    return X.values, y.values
-
-def split_dataset(X, y, val_size=0.2, test_size=0.2, random_state=1):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
-    X_train, X_val, y_train, y_val = \
-        train_test_split(X_train, y_train, test_size=val_size/(1-test_size), random_state=random_state)
-    return X_train, y_train, X_val, y_val, X_test, y_test
-
-def experiment(dataset, error_type, file, model):
-    X, y= load_data(dataset, error_type, file)
-    X_train, y_train, X_val, y_val, X_test, y_test = split_dataset(X, y)
-    train_acc, val_acc, test_acc = \
-        train_evaluate(model, X_train, y_train, X_val, y_val, X_test, y_test)
-    return train_acc, val_acc, test_acc
-
-if __name__ == '__main__':
-    dataset = utils.get_dataset('Airbnb')
-    model = LinearRegression() 
-    filenames = ['clean_mv_delete.csv', 'clean_mv_impute_mean_dummy.csv', 'clean_mv_impute_mean_mode.csv', 
-    'clean_mv_impute_median_dummy.csv', 'clean_mv_impute_median_mode.csv', 'clean_mv_impute_mode_dummy.csv', 'clean_mv_impute_mode_mode.csv']
-
-    for file in filenames:
-        train_acc, val_acc, test_acc = experiment(dataset, 'missing_values', file, model)
-        print(train_acc, val_acc)
-    
-
-
-
-
-
-
-
-
-
-
+def train(dataset_name, error_type, file_prefix, model_fn, params_dist, n_jobs=1):
+    dataset = utils.get_dataset(dataset_name)
+    file_dir_predix = utils.get_dir(dataset, error_type, file_prefix)
+    X_train, y_train, X_test, y_test = load_data(dataset, file_dir_predix)
+    estimator = model_fn()
+    searcher = RandomizedSearchCV(estimator, params_dist, cv=5, n_iter=20, n_jobs=n_jobs, return_train_score=True)
+    searcher.fit(X_train, y_train)
+    best_model, best_params, train_acc, val_acc = parse_searcher(searcher)
+    test_acc= best_model.score(X_test, y_test)
+    return best_params, train_acc, val_acc, test_acc

@@ -3,8 +3,6 @@ import numpy as np
 import utils
 from scipy.stats import expon, randint
 import json
-import config
-
 """
 Dataset: KDD, Citation, Marketing, Airbnb, DfD, Titanic, EGG, USCensus, Restaurant, Credit, Sensor, Movie, Food
 error_type: missing_values, outliers, duplicates, inconsistency, mislabel
@@ -39,7 +37,7 @@ datasets = ["Marketing", "Airbnb", "Titanic", "EGG", "USCensus", "Credit", "KDD"
 # models = ["linear_regression", "logistic_regression"]
 models = ["decision_tree_regression", "decision_tree_classification", "linear_svm", "adaboost", "knn_regression", "knn_classification"]
 
-result = json.load(open(config.result_dir, 'r'))
+result = utils.load_result()
 for dataset_name in datasets:
     dataset = utils.get_dataset(dataset_name)
     for error_type in dataset["error_types"]:

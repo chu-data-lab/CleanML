@@ -74,15 +74,19 @@ def get_dir(dataset, folder=None, file=None, create_folder=False):
     file_dir = os.path.join(folder_dir, file)
     return file_dir
 
-def save_result(key, res):
-    param, train_acc, val_acc, test_acc = res
-
+def load_result():
     result_dir = config.result_dir
     if os.path.exists(result_dir):
         result = json.load(open(result_dir, 'r'))
     else:
         result = {}
+    return result
 
+
+def save_result(key, res):
+    param, train_acc, val_acc, test_acc = res
+    result = load_result()
+    
     if key in result.keys():
         best_param, best_train_acc, best_val_acc, best_test_acc = result[key]
     else:

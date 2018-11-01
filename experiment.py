@@ -3,6 +3,8 @@ import numpy as np
 import utils
 from scipy.stats import expon, randint
 import json
+import argparse
+
 """
 Dataset: KDD, Citation, Marketing, Airbnb, DfD, Titanic, EGG, USCensus, Restaurant, Credit, Sensor, Movie, Food
 error_type: missing_values, outliers, duplicates, inconsistency, mislabel
@@ -24,6 +26,10 @@ file:
     mislabel: 2
         dirty, clean
 """
+parser = argparse.ArgumentParser()
+parser.add_argument('--cpu', default=1, type=int)
+args = parser.parse_args()
+
 np.random.seed(1)
 
 # error_types = ["missing_values", "outliers", "duplicates", "inconsistency", "mislabel"]
@@ -60,7 +66,7 @@ for dataset_name in datasets:
                 if model["params_space"] == "int":
                     params_dist = {model['params']:randint(1, 100)}
                     
-                best_param, train_acc, val_acc, test_acc = train(dataset_name, error_type, file, model_fn, params_dist)
+                best_param, train_acc, val_acc, test_acc = train(dataset_name, error_type, file, model_fn, params_dist, args.cpu)
                 print("Best param {}. Best val acc: {}".format(best_param, val_acc))
                 
                 res = (best_param, train_acc, val_acc, test_acc)

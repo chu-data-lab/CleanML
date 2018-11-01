@@ -1,6 +1,7 @@
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import LinearSVC
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.neural_network import MLPClassifier
@@ -13,7 +14,7 @@ linear_reg = {
     "fn": Lasso,
     "type": "regression",
     "params": "alpha",
-    "range_space": "log"
+    "params_space": "log"
 }
 
 logistic_reg = {
@@ -21,7 +22,7 @@ logistic_reg = {
     "fn": LogisticRegression,
     "type": "classification",
     "params": "C" ,
-    "range_space": "log"
+    "params_space": "log"
 }
 
 knn_clf = {
@@ -29,7 +30,7 @@ knn_clf = {
     "fn": KNeighborsClassifier,
     "type": "classification",
     "params": "n_neighbors",
-    "range_space": "int"
+    "params_space": "int"
 }
 
 knn_reg = {
@@ -37,7 +38,23 @@ knn_reg = {
     "fn": KNeighborsRegressor,
     "type": "regression",
     "params": "n_neighbors",
-    "range_space": "int"
+    "params_space": "int"
+}
+
+dt_reg = {
+    "name": "decision_tree_regression",
+    "fn": DecisionTreeRegressor,
+    "type": "regression",
+    "params": "max_depth",
+    "params_space": "int"
+}
+
+dt_clf = {
+    "name": "decision_tree_classification",
+    "fn": DecisionTreeRegressor,
+    "type": "classification",
+    "params": "max_depth",
+    "params_space": "int"
 }
 
 linear_svm = {
@@ -45,7 +62,7 @@ linear_svm = {
     "fn": LinearSVC,
     "type": "classification",
     "params": "C",
-    "range_space": "log"
+    "params_space": "log"
 }
 
 adaboost = {
@@ -53,7 +70,7 @@ adaboost = {
     "fn": AdaBoostClassifier,
     "type": "classification",
     "params": "learning_rate",
-    "range_space": "log"
+    "params_space": "log"
 }
 
-models = [linear_reg, logistic_reg, knn_clf, knn_reg, linear_svm]
+models = [linear_reg, logistic_reg, knn_clf, knn_reg, linear_svm, dt_reg, dt_clf, adaboost]

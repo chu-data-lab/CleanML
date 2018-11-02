@@ -11,7 +11,7 @@ error_type: missing_values, outliers, duplicates, inconsistency, mislabel
 model: linear_regression, logistic_regression, knn, linear_svm, adaboost, neural_network, naive_bayes, robust
 file:
     missing_values: 7
-        clean_delete
+        dirty
         clean_impute_mean_mode, clean_impute_median_mode, clean_impute_mode_mode, 
         clean_impute_mean_dummy, clean_impute_median_dummy, clean_impute_mode_dummy
     outliers: 10
@@ -40,8 +40,10 @@ files_dict = {  "missing_values": ["dirty", "clean_impute_mean_mode", "clean_imp
                 "mislabel":["dirty", "clean"]}
 
 datasets = ["Marketing", "Airbnb", "Titanic", "EGG", "USCensus", "Credit", "KDD"]
-# models = ["linear_regression", "logistic_regression"]
-models = ["decision_tree_regression", "decision_tree_classification", "linear_svm", "adaboost", "knn_regression", "knn_classification"]
+models = [  "linear_regression", "logistic_regression", "decision_tree_regression", 
+            "decision_tree_classification", "linear_svm", "adaboost_classification", 
+            "adaboost_regression", "knn_regression", "knn_classification"]
+
 
 result = utils.load_result()
 for dataset_name in datasets:
@@ -53,7 +55,7 @@ for dataset_name in datasets:
                 if model["type"] != dataset["ml_task"]:
                     continue
 
-                key = "/".join((dataset_name, error_type, model_name, file))
+                key = "/".join((dataset_name, error_type, file, model_name))
                 if key in result.keys():
                     continue
 

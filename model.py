@@ -3,7 +3,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import LinearSVC
-from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.naive_bayes import MultinomialNB
@@ -65,12 +65,20 @@ linear_svm = {
     "params_space": "log"
 }
 
-adaboost = {
-    "name": "adaboost",
+adaboost_clf = {
+    "name": "adaboost_classification",
     "fn": AdaBoostClassifier,
     "type": "classification",
     "params": "learning_rate",
     "params_space": "log"
 }
 
-models = [linear_reg, logistic_reg, knn_clf, knn_reg, linear_svm, dt_reg, dt_clf, adaboost]
+adaboost_reg = {
+    "name": "adaboost_regression",
+    "fn": AdaBoostRegressor,
+    "type": "regression",
+    "params": "learning_rate",
+    "params_space": "log"
+}
+
+models = [linear_reg, logistic_reg, knn_clf, knn_reg, linear_svm, dt_reg, dt_clf, adaboost_reg, adaboost_clf]

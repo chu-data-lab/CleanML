@@ -1,23 +1,29 @@
 """
     Clean missing labels of raw.csv for all dataset to ensure Supervised Learning.
     Clean missing features for dataset not having "missing_values" in config
-    Split dataset into trian/val/test
+    Split dataset into trian/test
 """
-
 import config
 import utils
 import pandas as pd
 import numpy as np
 import os
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--dataset', default=None)
+parser.add_argument('--restore', default=False, action='store_true')
+args = parser.parse_args()
 
-root_dir = config.root_dir
-datasets = config.datasets
-np.random.seed(1)
+if args.dataset is not None:
+    datasets = [utils.get_dataset(args.dataset)]
+else:
+    datasets = config.datasets
 
 def split(dataset, test_ratio=0.3):
     folder_dir = utils.get_dir(dataset, 'raw')
     file_dir = os.path.join(folder_dir, 'dirty.csv')
     data = pd.read_csv(file_dir)
+    np.random.seed(1)
     idx = np.random.permutation(data.index)
     data = data.reindex(idx)
     

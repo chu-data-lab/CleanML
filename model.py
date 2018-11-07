@@ -3,7 +3,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import LinearSVC
-from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
+from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor, RandomForestClassifier, RandomForestRegressor
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.naive_bayes import MultinomialNB
@@ -11,7 +11,7 @@ from sklearn.linear_model import RANSACRegressor
 
 linear_reg = {
     "name": "linear_regression",
-    "fn": Lasso,
+    "estimator": Lasso(),
     "type": "regression",
     "params": "alpha",
     "params_space": "log"
@@ -19,7 +19,7 @@ linear_reg = {
 
 logistic_reg = {
     "name": "logistic_regression",
-    "fn": LogisticRegression,
+    "estimator": LogisticRegression(solver="lbfgs", max_iter=100),
     "type": "classification",
     "params": "C" ,
     "params_space": "log"
@@ -27,7 +27,7 @@ logistic_reg = {
 
 knn_clf = {
     "name": "knn_classification",
-    "fn": KNeighborsClassifier,
+    "estimator": KNeighborsClassifier(),
     "type": "classification",
     "params": "n_neighbors",
     "params_space": "int"
@@ -35,7 +35,7 @@ knn_clf = {
 
 knn_reg = {
     "name": "knn_regression",
-    "fn": KNeighborsRegressor,
+    "estimator": KNeighborsRegressor(),
     "type": "regression",
     "params": "n_neighbors",
     "params_space": "int"
@@ -43,7 +43,7 @@ knn_reg = {
 
 dt_reg = {
     "name": "decision_tree_regression",
-    "fn": DecisionTreeRegressor,
+    "estimator": DecisionTreeRegressor(),
     "type": "regression",
     "params": "max_depth",
     "params_space": "int"
@@ -51,7 +51,7 @@ dt_reg = {
 
 dt_clf = {
     "name": "decision_tree_classification",
-    "fn": DecisionTreeRegressor,
+    "estimator": DecisionTreeClassifier(),
     "type": "classification",
     "params": "max_depth",
     "params_space": "int"
@@ -59,7 +59,7 @@ dt_clf = {
 
 linear_svm = {
     "name": "linear_svm",
-    "fn": LinearSVC,
+    "estimator": LinearSVC(),
     "type": "classification",
     "params": "C",
     "params_space": "log"
@@ -67,7 +67,7 @@ linear_svm = {
 
 adaboost_clf = {
     "name": "adaboost_classification",
-    "fn": AdaBoostClassifier,
+    "estimator": AdaBoostClassifier(),
     "type": "classification",
     "params": "learning_rate",
     "params_space": "log"
@@ -75,10 +75,33 @@ adaboost_clf = {
 
 adaboost_reg = {
     "name": "adaboost_regression",
-    "fn": AdaBoostRegressor,
+    "estimator": AdaBoostRegressor(),
     "type": "regression",
     "params": "learning_rate",
     "params_space": "log"
 }
 
-models = [linear_reg, logistic_reg, knn_clf, knn_reg, linear_svm, dt_reg, dt_clf, adaboost_reg, adaboost_clf]
+random_forest_clf = {
+    "name": "random_forest_classification",
+    "estimator": RandomForestClassifier(),
+    "type": "classification",
+    "params": "max_depth",
+    "params_space": "int"
+}
+
+random_forest_reg = {
+    "name": "random_forest_regression",
+    "estimator": RandomForestRegressor(),
+    "type": "regression",
+    "params": "max_depth",
+    "params_space": "int"
+}
+
+gaussian_nb = {
+    "name": "guassian_naive_bayes",
+    "estimator": GaussianNB(),
+    "type": "classification"
+}
+
+models = [linear_reg, logistic_reg, knn_clf, knn_reg, linear_svm, dt_reg, dt_clf, adaboost_reg, adaboost_clf,
+          random_forest_reg, random_forest_clf, gaussian_nb]

@@ -73,7 +73,7 @@ Restaurant = {
     "error_types": ['missing_values', 'duplicates','inconsistency'],
     "label": "priceRange",
     "ml_task": "classification",
-    "text_variables": ["name", "streetAddress"],
+    "text_variables": ["name", "streetAddress", "telephone", "website"],
     "key_columns": ["telephone"],
     "manual_clean_duplicates": False
 }
@@ -83,16 +83,16 @@ Credit = {
     "error_types": ['missing_values', 'outliers'],
     "label": "SeriousDlqin2yrs",
     "categorical_variables":["SeriousDlqin2yrs"],
-    "ml_task": "classification"
+    "ml_task": "classification",
+    "class_imbalance":True
 }
 
 Sensor = {
     "data_dir": "Sensor",
     "error_types": ['outliers'],
     "categorical_variables": ['moteid'],
-    "date_variable": ["date", "time"],
-    "label": 'moteid',
-    "ml_task": "classification"
+    "label": 'temperature',
+    "ml_task": "regression"
 }
 
 Movie = {
@@ -111,11 +111,12 @@ Food = {
     "error_types": ['inconsistency'],
     "categorical_variables": [],
     "label": "Results",
-    "ml_task": "classification"
+    "ml_task": "classification",
+    "drop_variables":["Inspection ID", "Location", 'Address', 'License #', "AKA Name"],
 }
 
-datasets = [KDD, Citation, Marketing, Airbnb, Titanic, 
-        EGG, USCensus, Restaurant, Credit, Sensor, Food, Movie]
+datasets = [Airbnb, USCensus, Credit, EGG, Titanic, KDD,
+            Marketing, Sensor]
 
-
+# Citation, Restaurant,Food, Movie
 

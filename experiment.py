@@ -39,17 +39,20 @@ files_dict = {  "missing_values": ["dirty", "clean_impute_mean_mode", "clean_imp
                 "inconsistency":["dirty", "clean"],
                 "mislabel":["dirty", "clean"]}
 
-datasets = ["Marketing", "Airbnb", "Titanic", "EGG", "USCensus", "Credit", "KDD"]
-models = [  "linear_regression", "logistic_regression", "decision_tree_regression", 
-            "decision_tree_classification", "linear_svm", "adaboost_classification", 
-            "adaboost_regression", "knn_regression", "knn_classification"]
+# datasets = ["Marketing", "Airbnb", "Titanic", "EGG", "USCensus", "Credit", "KDD"]
+# models = [  "linear_regression", "logistic_regression", "decision_tree_regression", 
+#             "decision_tree_classification", "linear_svm", "adaboost_classification", 
+#             "adaboost_regression", "knn_regression", "knn_classification"]
 
+datasets = ["KDD"]
+models = ["logistic_regression"]
 
 result = utils.load_result()
 for dataset_name in datasets:
     dataset = utils.get_dataset(dataset_name)
     for error_type in dataset["error_types"]:
-        for file in files_dict[error_type]:
+        files = files_dict[error_type]
+        for file in files:
             for model_name in models:
                 model = utils.get_model(model_name)
                 if model["type"] != dataset["ml_task"]:
@@ -61,15 +64,16 @@ for dataset_name in datasets:
 
                 print("Processing {}".format(key))
                 
-                model_fn = model["fn"]
+                estimator = model["estimator"]
 
-                if model["params_space"] == "log":
-                    params_dist = {model['params']:expon(scale=100)}
-                if model["params_space"] == "int":
-                    params_dist = {model['params']:randint(1, 100)}
-                    
-                best_param, train_acc, val_acc, test_acc = train(dataset_name, error_type, file, model_fn, params_dist, args.cpu)
-                print("Best param {}. Best val acc: {}".format(best_param, val_acc))
-                
-                res = (best_param, train_acc, val_acc, test_acc)
-                utils.save_result(key, res)
+                if "params" in model.keys():
+                    if model["params_space"] == "log":
+                        params_dist = {model['params']:expon(scale=100)}
+                    if model["params_space"] == "int":
+                        params_dist = {model['params']:randint(1, 100)}
+                else:
+                    params_dist = None
+
+                result_dict = train(dataset_name, error_type, file, estimator, params_dist, args.cpu)
+                print("Best params {}. Best val acc: {}".format(result_dict["best_params"], result_dict["val_acc"]))
+                utils.save_result(key, result_dict)

@@ -82,13 +82,12 @@ def load_result():
         result = {}
     return result
 
-
 def save_result(key, res):
-    param, train_acc, val_acc, test_acc = res
     result = load_result()
-    
+    val_acc = res["val_acc"]
+
     if key in result.keys():
-        best_param, best_train_acc, best_val_acc, best_test_acc = result[key]
+        best_val_acc = result[key]["val_acc"]
     else:
         best_val_acc = float('-inf')
 
@@ -104,13 +103,29 @@ def get_model(model_name):
         sys.exit()
     return mod[0]
 
+def get_test_files(error_type, train_file):
+    file_type = train_file[0:5]
+    if file_type == "clean":
+        return [train_file, "dirty"]
 
-
-
-
-
-
-
-
-
-
+    if error_type == "missing_values":
+        return ["dirty", 
+                "clean_impute_mean_mode", 
+                "clean_impute_mean_dummy", 
+                "clean_impute_median_mode", 
+                "clean_impute_median_dummy", 
+                "clean_impute_mode_mode", 
+                "clean_impute_mode_dummy"]
+    elif error_type == "outliers":
+        return ["dirty", 
+                 "clean_SD_delete", 
+                 "clean_iso_forest_delete", 
+                 "clean_IQR_delete", 
+                 "clean_SD_impute_mean_dummy", 
+                 "clean_IQR_impute_mean_dummy", 
+                 "clean_iso_forest_impute_mean_dummy", 
+                 "clean_SD_impute_median_dummy",
+                 "clean_IQR_impute_median_dummy", 
+                 "clean_iso_forest_impute_median_dummy"]
+    else:
+        return ["dirty", "clean"]

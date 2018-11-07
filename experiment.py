@@ -39,13 +39,14 @@ files_dict = {  "missing_values": ["dirty", "clean_impute_mean_mode", "clean_imp
                 "inconsistency":["dirty", "clean"],
                 "mislabel":["dirty", "clean"]}
 
-# datasets = ["Marketing", "Airbnb", "Titanic", "EGG", "USCensus", "Credit", "KDD"]
-# models = [  "linear_regression", "logistic_regression", "decision_tree_regression", 
-#             "decision_tree_classification", "linear_svm", "adaboost_classification", 
-#             "adaboost_regression", "knn_regression", "knn_classification"]
+datasets = ["Marketing", "Airbnb", "Titanic", "EGG", "USCensus", "Sensor", "Credit", "KDD"]
+models = [  "linear_regression", "logistic_regression", "decision_tree_regression", 
+            "decision_tree_classification", "linear_svm", "adaboost_classification", 
+            "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
+            "random_forest_regression", "guassian_naive_bayes"]
 
-datasets = ["KDD"]
-models = ["logistic_regression"]
+# datasets = ["KDD"]
+# models = ["logistic_regression"]
 
 result = utils.load_result()
 for dataset_name in datasets:

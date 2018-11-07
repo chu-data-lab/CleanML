@@ -106,6 +106,7 @@ def train(dataset_name, error_type, train_file, estimator, params_dist, n_jobs=1
 
     if params_dist is not None:
         searcher = RandomizedSearchCV(estimator, params_dist, cv=5, n_iter=20, n_jobs=n_jobs, return_train_score=True)
+        warning = []
         searcher.fit(X_train, y_train)
         best_model, best_params, train_acc, val_acc = parse_searcher(searcher)
     else:

@@ -4,6 +4,8 @@ import utils
 from scipy.stats import expon, randint
 import json
 import argparse
+import logging
+import datetime
 
 """
 Dataset: KDD, Citation, Marketing, Airbnb, DfD, Titanic, EGG, USCensus, Restaurant, Credit, Sensor, Movie, Food
@@ -29,7 +31,9 @@ file:
 parser = argparse.ArgumentParser()
 parser.add_argument('--cpu', default=1, type=int)
 args = parser.parse_args()
-
+# warnings.simplefilter("ignore")
+logging.captureWarnings(True)
+logging.basicConfig(filename='logging_{}.log'.format(datetime.datetime.now()),level=logging.DEBUG)
 np.random.seed(1)
 
 # error_types = ["missing_values", "outliers", "duplicates", "inconsistency", "mislabel"]
@@ -45,7 +49,7 @@ models = [  "linear_regression", "logistic_regression", "decision_tree_regressio
             "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
             "random_forest_regression", "guassian_naive_bayes"]
 
-# datasets = ["KDD"]
+# datasets = ["Titanic"]
 # models = ["logistic_regression"]
 
 result = utils.load_result()
@@ -64,6 +68,7 @@ for dataset_name in datasets:
                     continue
 
                 print("Processing {}".format(key))
+                logging.info("Processing {}".format(key))
                 
                 estimator = model["estimator"]
 
@@ -74,7 +79,8 @@ for dataset_name in datasets:
                         params_dist = {model['params']:randint(1, 100)}
                 else:
                     params_dist = None
-
+                
                 result_dict = train(dataset_name, error_type, file, estimator, params_dist, args.cpu)
+
                 print("Best params {}. Best val acc: {}".format(result_dict["best_params"], result_dict["val_acc"]))
                 utils.save_result(key, result_dict)

@@ -2,7 +2,7 @@ from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVC, SVC
 from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor, RandomForestClassifier, RandomForestRegressor
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -72,7 +72,7 @@ dt_clf = {
 linear_svm = {
     "name": "linear_svm",
     "fn": LinearSVC,
-    "estimator": LinearSVC(max_iter=10000),
+    "estimator": SVC(kernel='linear'),
     "type": "classification",
     "params": "C",
     "params_type": "real",

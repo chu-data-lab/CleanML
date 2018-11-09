@@ -6,6 +6,7 @@ import json
 import argparse
 import logging
 import datetime
+import warnings
 
 """
 Dataset: KDD, Citation, Marketing, Airbnb, DfD, Titanic, EGG, USCensus, Restaurant, Credit, Sensor, Movie, Food
@@ -48,9 +49,6 @@ models = [  "linear_regression", "logistic_regression", "decision_tree_regressio
             "decision_tree_classification", "linear_svm", "adaboost_classification", 
             "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
             "random_forest_regression", "guassian_naive_bayes"]
-
-# datasets = ["Titanic"]
-# models = ["logistic_regression"]
 
 result = utils.load_result()
 for dataset_name in datasets:

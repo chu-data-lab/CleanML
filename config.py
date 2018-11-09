@@ -108,15 +108,16 @@ Movie = {
 
 Food = {
     "data_dir": "Food",
-    "error_types": ['inconsistency'],
-    "categorical_variables": [],
+    "error_types": ['missing_values', 'inconsistency'],
+    "categorical_variables": ['Violations'],
     "label": "Results",
     "ml_task": "classification",
-    "drop_variables":["Inspection ID", "Location", 'Address', 'License #', "AKA Name"],
+    "drop_variables":[],
+    "text_variables":["DBA Name"]
 }
 
 datasets = [Airbnb, USCensus, Credit, EGG, Titanic, KDD,
-            Marketing, Sensor]
+            Marketing, Sensor, Movie, Food]
 
 # Citation, Restaurant,Food, Movie
 

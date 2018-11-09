@@ -101,7 +101,7 @@ def train(dataset_name, error_type, train_file, estimator, params_dist, n_jobs=1
     dataset = utils.get_dataset(dataset_name)
     train_dir = utils.get_dir(dataset, error_type, train_file + "_train.csv")
     test_files = utils.get_test_files(error_type, train_file)
-    test_dir_list = [utils.get_dir(dataset, error_type, test_file + "_train.csv") for test_file in test_files]
+    test_dir_list = [utils.get_dir(dataset, error_type, test_file + "_test.csv") for test_file in test_files]
     X_train, y_train, X_test_list, y_test_list = load_data(dataset, train_dir, test_dir_list)
 
     if params_dist is not None:

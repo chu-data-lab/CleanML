@@ -6,8 +6,9 @@ import re
 
 class TableGenerator(object):
     def __init__(self, results):
-        self.results = results
-        self.dicts={tuple(k.split('/')): v.split('/') for k, v in self.results.items()}
+        # self.results = results
+        # self.dicts={tuple(k.split('/')): v.split('/') for k, v in self.results.items()}
+        self.dicts = results
         self.getErrortype()
 
     def getErrortype(self):
@@ -54,13 +55,41 @@ for ml_type in ["classification", "regression"]:
     result = {}
     for k, v in res.items():
         dataset, error, file, model = k.split('/')
-        param, train, val, test = v
-        if file[0] == "d":
-            value = "{:.4f}/{:.4f}/{:.4f}/".format(train, val, test)
+        key = (dataset, error, file, model)
+
+        train_acc = "{:.6f}".format(v['train_acc'])
+        val_acc = "{:.6f}".format(v['val_acc'])
+        dirty_test_acc = "{:.6f}".format(v['dirty_test_acc'])
+
+        if error == 'missing_values':
+            if file == 'dirty':
+                clean_test_acc = "{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}".format(v["clean_impute_mode_mode_test_acc"], 
+                                                                                 v["clean_impute_mode_dummy_test_acc"], 
+                                                                                 v["clean_impute_median_mode_test_acc"], 
+                                                                                 v["clean_impute_median_dummy_test_acc"], 
+                                                                                 v["clean_impute_mean_mode_test_acc"], 
+                                                                                 v["clean_impute_mean_dummy_test_acc"])
+            else:
+                clean_test_acc = "{:.6f}".format(v[file + "_test_acc"])
+        elif error == 'outliers':
+            if file == 'dirty':
+                clean_test_acc = "{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}".format(v["clean_iso_forest_impute_median_dummy_test_acc"],
+                                                                                 v["clean_IQR_impute_mean_dummy_test_acc"], 
+                                                                                 v["clean_iso_forest_delete_test_acc"], 
+                                                                                 v["clean_SD_impute_median_dummy_test_acc"],
+                                                                                 v["clean_iso_forest_impute_mean_dummy_test_acc"],
+                                                                                 v["clean_SD_delete_test_acc"], 
+                                                                                 v["clean_IQR_impute_median_dummy_test_acc"],
+                                                                                 v["clean_IQR_impute_mean_dummy_test_acc"],
+                                                                                 v["clean_IQR_delete_test_acc"])
+            else:
+                clean_test_acc = "{:.6f}".format(v[file + "_test_acc"])
         else:
-            value = "{:.4f}/{:.4f}//{:.4f}".format(train, val, test)
+            clean_test_acc = "{:.6f}".format(v['clean_test_acc'])
+
+        value = [train_acc, val_acc, dirty_test_acc, clean_test_acc]
         if utils.get_model(model)['type'] == ml_type:
-            result[k] = value
+            result[key] = value
 
     table_generator = TableGenerator(result)
     table_generator.writeToDataframe("{}_result.xlsx".format(ml_type))

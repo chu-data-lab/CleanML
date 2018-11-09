@@ -4,6 +4,7 @@ import config
 import sys
 import json
 import model
+import numpy as np
 
 def get_dataset(name):
     """
@@ -91,7 +92,7 @@ def save_result(key, res):
     else:
         best_val_acc = float('-inf')
 
-    if val_acc > best_val_acc:
+    if val_acc > best_val_acc or np.isnan(val_acc):
         result[key] = res
     json.dump(result, open('./result.json', 'w'))
     

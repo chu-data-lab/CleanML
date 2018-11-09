@@ -10,8 +10,7 @@ class InconsistencyCleaner(object):
         N, m = dirty_train.shape
         dirty_train = dirty_train.values
         clean_train = clean_train.values
-        self.incon_dict = {}
-        mask = dirty_train != clean_train
+        mask = (dirty_train != clean_train)
         dirty = dirty_train[mask]
         clean = clean_train[mask]
         self.incon_dict = dict(zip(dirty, clean))

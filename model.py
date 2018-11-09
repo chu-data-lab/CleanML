@@ -66,7 +66,7 @@ dt_clf = {
 linear_svm = {
     "name": "linear_svm",
     "fn": LinearSVC,
-    "estimator": LinearSVC(),
+    "estimator": LinearSVC(max_iter=10000),
     "type": "classification",
     "params": "C",
     "params_space": "log"

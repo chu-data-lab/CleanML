@@ -47,14 +47,14 @@ files_dict = {  "missing_values": ["dirty", "clean_impute_mean_mode", "clean_imp
                 "inconsistency":["dirty", "clean"],
                 "mislabel":["dirty", "clean"]}
 
-datasets = ["Marketing", "Airbnb", "Titanic", "EGG", "USCensus", "Sensor", "Credit", "KDD", "Movie"]
+# datasets = ["Marketing", "Airbnb", "Titanic", "EGG", "USCensus", "Sensor", "Credit", "KDD", "Movie"]
+datasets = ["Movie", "Food"]
 models = [  "linear_regression", "logistic_regression", "decision_tree_regression", 
             "decision_tree_classification", "linear_svm", "adaboost_classification", 
             "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
             "random_forest_regression", "guassian_naive_bayes"]
 
-datasets = ['IMDB']
-models = ['logistic_regression']
+
 
 result = utils.load_result()
 for dataset_name in datasets:

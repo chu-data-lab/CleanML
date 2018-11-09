@@ -21,7 +21,7 @@ linear_reg = {
 logistic_reg = {
     "name": "logistic_regression",
     "fn": LogisticRegression,
-    "estimator": LogisticRegression(solver="lbfgs", max_iter=200),
+    "estimator": LogisticRegression(solver="lbfgs", max_iter=10000),
     "type": "classification",
     "params": "C" ,
     "params_space": "log"

@@ -64,14 +64,9 @@ def preprocess(dataset, X_train, y_train, X_test_list, y_test_list):
             for i in range(n_test_files):
                 X_test_list[i] = pd.concat([X_test_list[i], x_test_list[i]], axis=1)
 
-
     X = pd.concat([X_train, *X_test_list], axis=0)
-    X = X[0:100]
     X = pd.get_dummies(X, drop_first=True)
-    print(X.columns.tolist())
-    print(X.shape)
-    sys.exit()
-    
+
     X_train = X[:n_tr, :]
     X_test_list = np.split(X[n_tr:], test_split)
     return X_train, y_train, X_test_list, y_test_list

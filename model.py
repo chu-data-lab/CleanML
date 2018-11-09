@@ -74,6 +74,7 @@ linear_svm = {
 
 adaboost_clf = {
     "name": "adaboost_classification",
+    "fn": AdaBoostClassifier,
     "estimator": AdaBoostClassifier(),
     "type": "classification",
     "params": "learning_rate",

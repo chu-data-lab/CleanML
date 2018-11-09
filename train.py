@@ -9,6 +9,7 @@ from sklearn.preprocessing import LabelEncoder
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
+import pickle
 
 def text_embedding(corpus_train, corpus_test_list, y_train):
     vectorizer = TfidfVectorizer(stop_words='english')
@@ -16,7 +17,7 @@ def text_embedding(corpus_train, corpus_test_list, y_train):
     x_test_list = [vectorizer.transform(corpus_test) for corpus_test in corpus_test_list]
     feature_names = vectorizer.get_feature_names()
 
-    ch2 = SelectKBest(chi2, k=500)
+    ch2 = SelectKBest(chi2, k=1000)
     x_train = ch2.fit_transform(x_train, y_train)
     x_test_list = [ch2.transform(x_test) for x_test in x_test_list]
     feature_names = [feature_names[i] for i in ch2.get_support(indices=True)]
@@ -40,6 +41,7 @@ def preprocess(dataset, X_train, y_train, X_test_list, y_test_list):
     test_split = np.cumsum(n_te_list)[:-1]
 
     y = pd.concat([y_train, *y_test_list], axis=0)
+
     if dataset['ml_task'] == 'classification':
         le = LabelEncoder()
         y = le.fit_transform(y.values)
@@ -62,18 +64,24 @@ def preprocess(dataset, X_train, y_train, X_test_list, y_test_list):
             for i in range(n_test_files):
                 X_test_list[i] = pd.concat([X_test_list[i], x_test_list[i]], axis=1)
 
+
     X = pd.concat([X_train, *X_test_list], axis=0)
-    X = pd.get_dummies(X, drop_first=True).values
+    X = X[0:100]
+    X = pd.get_dummies(X, drop_first=True)
+    print(X.columns.tolist())
+    print(X.shape)
+    sys.exit()
+    
     X_train = X[:n_tr, :]
     X_test_list = np.split(X[n_tr:], test_split)
     return X_train, y_train, X_test_list, y_test_list
 
 def down_sample(X, y):
-    rus = RandomUnderSampler(return_indices=False)
+    rus = RandomUnderSampler()
     X_rus, y_rus = rus.fit_sample(X, y)
-    X_train = pd.DataFrame(X_rus, columns=X.columns)
-    y_train = pd.DataFrame(y_rus)
-
+    indices = rus.sample_indices_
+    X_train = X.iloc[indices, :]
+    y_train = y.iloc[indices]
     return X_train, y_train
 
 def load_data(dataset, train_dir, test_dir_list):
@@ -97,16 +105,19 @@ def parse_searcher(searcher):
     best_model = searcher.best_estimator_
     return best_model, best_params, train_acc, val_acc
 
-def train(dataset_name, error_type, train_file, estimator, params_dist, n_jobs=1):
-    dataset = utils.get_dataset(dataset_name)
-    train_dir = utils.get_dir(dataset, error_type, train_file + "_train.csv")
-    test_files = utils.get_test_files(error_type, train_file)
-    test_dir_list = [utils.get_dir(dataset, error_type, test_file + "_test.csv") for test_file in test_files]
-    X_train, y_train, X_test_list, y_test_list = load_data(dataset, train_dir, test_dir_list)
+def train(dataset_name, error_type, train_file, estimator, params_dist, n_jobs=1, special=False):
+    if special:
+        X_train, y_train, X_test_list, y_test_list = load_imdb(dataset_name, error_type, train_file)
+        test_files = ['dirty', 'clean']
+    else:
+        dataset = utils.get_dataset(dataset_name)
+        train_dir = utils.get_dir(dataset, error_type, train_file + "_train.csv")
+        test_files = utils.get_test_files(error_type, train_file)
+        test_dir_list = [utils.get_dir(dataset, error_type, test_file + "_test.csv") for test_file in test_files]
+        X_train, y_train, X_test_list, y_test_list = load_data(dataset, train_dir, test_dir_list)
 
     if params_dist is not None:
         searcher = RandomizedSearchCV(estimator, params_dist, cv=5, n_iter=20, n_jobs=n_jobs, return_train_score=True)
-        warning = []
         searcher.fit(X_train, y_train)
         best_model, best_params, train_acc, val_acc = parse_searcher(searcher)
     else:
@@ -122,6 +133,19 @@ def train(dataset_name, error_type, train_file, estimator, params_dist, n_jobs=1
         test_acc = best_model.score(X_test, y_test)
         result_dict[file + "_test_acc"] = test_acc        
     return result_dict
+
+# Special Case for IMDB
+def load_imdb(dataset_name, error_type, train_file):
+    dataset = utils.get_dataset(dataset_name)
+    file_dir = utils.get_dir(dataset, error_type)
+    file_predix= utils.get_dir(dataset, error_type, train_file)
+    X_train = pickle.load(open(file_predix + '_X_train.p', 'rb'), encoding='latin1').toarray()
+    y_train = pickle.load(open(file_predix + '_y_train.p', 'rb'), encoding='latin1')
+    clean_X_test = pickle.load(open(file_dir + '/clean_X_test.p', 'rb'), encoding='latin1').toarray()
+    clean_y_test = pickle.load(open(file_dir + '/clean_y_test.p', 'rb'), encoding='latin1')
+    dirty_X_test = pickle.load(open(file_dir + '/dirty_X_test.p', 'rb'), encoding='latin1').toarray()
+    dirty_y_test = pickle.load(open(file_dir + '/dirty_y_test.p', 'rb'), encoding='latin1')
+    return X_train, y_train, [dirty_X_test, clean_X_test], [dirty_y_test, clean_y_test]
 
 
 

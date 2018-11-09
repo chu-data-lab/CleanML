@@ -107,7 +107,7 @@ def get_model(model_name):
 def get_test_files(error_type, train_file):
     file_type = train_file[0:5]
     if file_type == "clean":
-        return [train_file, "dirty"]
+        return ["dirty", train_file]
 
     if error_type == "missing_values":
         return ["dirty", 

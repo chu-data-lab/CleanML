@@ -32,6 +32,7 @@ file:
 parser = argparse.ArgumentParser()
 parser.add_argument('--cpu', default=1, type=int)
 parser.add_argument('--log', default=False, action='store_true')
+parser.add_argument('--nosave', default=False, action='store_true')
 args = parser.parse_args()
 # warnings.simplefilter("ignore")
 if args.log:
@@ -46,11 +47,14 @@ files_dict = {  "missing_values": ["dirty", "clean_impute_mean_mode", "clean_imp
                 "inconsistency":["dirty", "clean"],
                 "mislabel":["dirty", "clean"]}
 
-datasets = ["Marketing", "Airbnb", "Titanic", "EGG", "USCensus", "Sensor", "Credit", "KDD"]
+datasets = ["Marketing", "Airbnb", "Titanic", "EGG", "USCensus", "Sensor", "Credit", "KDD", "Movie"]
 models = [  "linear_regression", "logistic_regression", "decision_tree_regression", 
             "decision_tree_classification", "linear_svm", "adaboost_classification", 
             "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
             "random_forest_regression", "guassian_naive_bayes"]
+
+datasets = ['IMDB']
+models = ['logistic_regression']
 
 result = utils.load_result()
 for dataset_name in datasets:
@@ -80,7 +84,9 @@ for dataset_name in datasets:
                 else:
                     params_dist = None
                 
-                result_dict = train(dataset_name, error_type, file, estimator, params_dist, args.cpu)
+                special = (dataset_name == 'IMDB')
+                result_dict = train(dataset_name, error_type, file, estimator, params_dist, args.cpu, special)
 
                 print("Best params {}. Best val acc: {}".format(result_dict["best_params"], result_dict["val_acc"]))
-                utils.save_result(key, result_dict)
+                if not args.nosave:
+                    utils.save_result(key, result_dict)

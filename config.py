@@ -116,8 +116,15 @@ Food = {
     "text_variables":["DBA Name"]
 }
 
+IMDB = {
+    "data_dir": "IMDB",
+    "error_types": ['mislabel'],
+    "label": 'genres',
+    "ml_task": "classification"
+}
+
 datasets = [Airbnb, USCensus, Credit, EGG, Titanic, KDD,
-            Marketing, Sensor, Movie, Food]
+            Marketing, Sensor, Movie, Food, IMDB]
 
 # Citation, Restaurant,Food, Movie
 

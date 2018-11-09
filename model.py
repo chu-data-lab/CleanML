@@ -21,7 +21,7 @@ linear_reg = {
 logistic_reg = {
     "name": "logistic_regression",
     "fn": LogisticRegression,
-    "estimator": LogisticRegression(solver="liblinear", max_iter=1000, multi_class='auto'),
+    "estimator": LogisticRegression(solver="liblinear", max_iter=10000, multi_class='auto'),
     "type": "classification",
     "params": "C" ,
     "params_type": "real"
@@ -66,7 +66,7 @@ dt_clf = {
 linear_svm = {
     "name": "linear_svm",
     "fn": LinearSVC,
-    "estimator": LinearSVC(max_iter=1000),
+    "estimator": LinearSVC(max_iter=10000),
     "type": "classification",
     "params": "C",
     "params_type": "real"

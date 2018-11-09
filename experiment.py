@@ -24,15 +24,16 @@ model_names = [ "linear_regression", "logistic_regression", "decision_tree_regre
                 "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
                 "random_forest_regression", "guassian_naive_bayes"]
 
-# dataset_names = ["Titanic"]
-# model_names = ["logistic_regression"]
+dataset_names = ["Titanic"]
+model_names = ["adaboost_classification"]
 
 def get_coarse_grid(model):
     np.random.seed(args.seed)
+    low, high = model["params_range"]
     if model["params_type"] == "real":
-        param_grid = {model['params']: 10 ** np.random.uniform(-5, 5, 20)}
+        param_grid = {model['params']: 10 ** np.random.uniform(low, high, 20)}
     if model["params_type"] == "int":
-        param_grid = {model['params']: np.random.randint(1, 100, 20)}
+        param_grid = {model['params']: np.random.randint(low, high, 20)}
     return param_grid
 
 def get_fine_grid(model, best_param_coarse):

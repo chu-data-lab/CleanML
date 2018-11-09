@@ -112,7 +112,7 @@ def train(dataset_name, error_type, train_file, estimator, param_gird, n_jobs=1,
         X_train, y_train, X_test_list, y_test_list = load_data(dataset, train_dir, test_dir_list)
 
     if param_gird is not None:
-        searcher = GridSearchCV(estimator, param_gird, cv=5, n_jobs=n_jobs, return_train_score=True)
+        searcher = GridSearchCV(estimator, param_gird, cv=5, n_jobs=n_jobs, return_train_score=True, iid=False)
         searcher.fit(X_train, y_train)
         best_model, best_params, train_acc, val_acc = parse_searcher(searcher)
     else:

@@ -15,7 +15,8 @@ linear_reg = {
     "estimator": Lasso(),
     "type": "regression",
     "params": "alpha",
-    "params_type": "real"
+    "params_type": "real",
+    "params_range": [-5, 5]
 }
 
 logistic_reg = {
@@ -24,7 +25,8 @@ logistic_reg = {
     "estimator": LogisticRegression(solver="liblinear", max_iter=10000, multi_class='auto'),
     "type": "classification",
     "params": "C" ,
-    "params_type": "real"
+    "params_type": "real",
+    "params_range": [-5, 5]
 }
 
 knn_clf = {
@@ -33,7 +35,8 @@ knn_clf = {
     "estimator": KNeighborsClassifier(),
     "type": "classification",
     "params": "n_neighbors",
-    "params_type": "int"
+    "params_type": "int",
+    "params_range": [1, 200]
 }
 
 knn_reg = {
@@ -42,7 +45,8 @@ knn_reg = {
     "estimator": KNeighborsRegressor(),
     "type": "regression",
     "params": "n_neighbors",
-    "params_type": "int"
+    "params_type": "int",
+    "params_range": [1, 200]
 }
 
 dt_reg = {
@@ -51,7 +55,8 @@ dt_reg = {
     "estimator": DecisionTreeRegressor(),
     "type": "regression",
     "params": "max_depth",
-    "params_type": "int"
+    "params_type": "int",
+    "params_range": [1, 200]
 }
 
 dt_clf = {
@@ -60,7 +65,8 @@ dt_clf = {
     "estimator": DecisionTreeClassifier(),
     "type": "classification",
     "params": "max_depth",
-    "params_type": "int"
+    "params_type": "int",
+    "params_range": [1, 200]
 }
 
 linear_svm = {
@@ -69,7 +75,8 @@ linear_svm = {
     "estimator": LinearSVC(max_iter=10000),
     "type": "classification",
     "params": "C",
-    "params_type": "real"
+    "params_type": "real",
+    "params_range": [-5, 5]
 }
 
 adaboost_clf = {
@@ -78,7 +85,8 @@ adaboost_clf = {
     "estimator": AdaBoostClassifier(),
     "type": "classification",
     "params": "learning_rate",
-    "params_type": "real"
+    "params_type": "real",
+    "params_range": [-10, -1]
 }
 
 adaboost_reg = {
@@ -87,7 +95,8 @@ adaboost_reg = {
     "estimator": AdaBoostRegressor(),
     "type": "regression",
     "params": "learning_rate",
-    "params_type": "real"
+    "params_type": "real",
+    "params_range": [-10, -1]
 }
 
 random_forest_clf = {
@@ -96,7 +105,8 @@ random_forest_clf = {
     "estimator": RandomForestClassifier(),
     "type": "classification",
     "params": "max_depth",
-    "params_type": "int"
+    "params_type": "int",
+    "params_range": [1, 200]
 }
 
 random_forest_reg = {
@@ -105,7 +115,8 @@ random_forest_reg = {
     "estimator": RandomForestRegressor(),
     "type": "regression",
     "params": "max_depth",
-    "params_type": "int"
+    "params_type": "int",
+    "params_range": [1, 200]
 }
 
 gaussian_nb = {

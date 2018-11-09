@@ -11,6 +11,7 @@ from sklearn.linear_model import RANSACRegressor
 
 linear_reg = {
     "name": "linear_regression",
+    "fn": Lasso,
     "estimator": Lasso(),
     "type": "regression",
     "params": "alpha",
@@ -19,6 +20,7 @@ linear_reg = {
 
 logistic_reg = {
     "name": "logistic_regression",
+    "fn": LogisticRegression,
     "estimator": LogisticRegression(solver="lbfgs", max_iter=200),
     "type": "classification",
     "params": "C" ,
@@ -27,6 +29,7 @@ logistic_reg = {
 
 knn_clf = {
     "name": "knn_classification",
+    "fn": KNeighborsClassifier,
     "estimator": KNeighborsClassifier(),
     "type": "classification",
     "params": "n_neighbors",
@@ -35,6 +38,7 @@ knn_clf = {
 
 knn_reg = {
     "name": "knn_regression",
+    "fn": KNeighborsRegressor,
     "estimator": KNeighborsRegressor(),
     "type": "regression",
     "params": "n_neighbors",
@@ -43,6 +47,7 @@ knn_reg = {
 
 dt_reg = {
     "name": "decision_tree_regression",
+    "fn": DecisionTreeRegressor,
     "estimator": DecisionTreeRegressor(),
     "type": "regression",
     "params": "max_depth",
@@ -51,6 +56,7 @@ dt_reg = {
 
 dt_clf = {
     "name": "decision_tree_classification",
+    "fn": DecisionTreeClassifier,
     "estimator": DecisionTreeClassifier(),
     "type": "classification",
     "params": "max_depth",
@@ -59,6 +65,7 @@ dt_clf = {
 
 linear_svm = {
     "name": "linear_svm",
+    "fn": LinearSVC,
     "estimator": LinearSVC(),
     "type": "classification",
     "params": "C",
@@ -75,6 +82,7 @@ adaboost_clf = {
 
 adaboost_reg = {
     "name": "adaboost_regression",
+    "fn": AdaBoostRegressor,
     "estimator": AdaBoostRegressor(),
     "type": "regression",
     "params": "learning_rate",
@@ -83,6 +91,7 @@ adaboost_reg = {
 
 random_forest_clf = {
     "name": "random_forest_classification",
+    "fn": RandomForestClassifier,
     "estimator": RandomForestClassifier(),
     "type": "classification",
     "params": "max_depth",
@@ -91,6 +100,7 @@ random_forest_clf = {
 
 random_forest_reg = {
     "name": "random_forest_regression",
+    "fn": RandomForestRegressor,
     "estimator": RandomForestRegressor(),
     "type": "regression",
     "params": "max_depth",
@@ -99,6 +109,7 @@ random_forest_reg = {
 
 gaussian_nb = {
     "name": "guassian_naive_bayes",
+    "fn": GaussianNB,
     "estimator": GaussianNB(),
     "type": "classification"
 }

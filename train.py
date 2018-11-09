@@ -17,7 +17,7 @@ def text_embedding(corpus_train, corpus_test_list, y_train):
     x_test_list = [vectorizer.transform(corpus_test) for corpus_test in corpus_test_list]
     feature_names = vectorizer.get_feature_names()
 
-    ch2 = SelectKBest(chi2, k=1000)
+    ch2 = SelectKBest(chi2, k=2000)
     x_train = ch2.fit_transform(x_train, y_train)
     x_test_list = [ch2.transform(x_test) for x_test in x_test_list]
     feature_names = [feature_names[i] for i in ch2.get_support(indices=True)]
@@ -65,7 +65,7 @@ def preprocess(dataset, X_train, y_train, X_test_list, y_test_list):
                 X_test_list[i] = pd.concat([X_test_list[i], x_test_list[i]], axis=1)
 
     X = pd.concat([X_train, *X_test_list], axis=0)
-    X = pd.get_dummies(X, drop_first=True)
+    X = pd.get_dummies(X, drop_first=True).values
 
     X_train = X[:n_tr, :]
     X_test_list = np.split(X[n_tr:], test_split)
@@ -100,7 +100,7 @@ def parse_searcher(searcher):
     best_model = searcher.best_estimator_
     return best_model, best_params, train_acc, val_acc
 
-def train(dataset_name, error_type, train_file, estimator, params_dist, n_jobs=1, special=False):
+def train(dataset_name, error_type, train_file, estimator, param_gird, n_jobs=1, special=False):
     if special:
         X_train, y_train, X_test_list, y_test_list = load_imdb(dataset_name, error_type, train_file)
         test_files = ['dirty', 'clean']
@@ -111,8 +111,8 @@ def train(dataset_name, error_type, train_file, estimator, params_dist, n_jobs=1
         test_dir_list = [utils.get_dir(dataset, error_type, test_file + "_test.csv") for test_file in test_files]
         X_train, y_train, X_test_list, y_test_list = load_data(dataset, train_dir, test_dir_list)
 
-    if params_dist is not None:
-        searcher = RandomizedSearchCV(estimator, params_dist, cv=5, n_iter=50, n_jobs=n_jobs, return_train_score=True)
+    if param_gird is not None:
+        searcher = GridSearchCV(estimator, param_gird, cv=5, n_jobs=n_jobs, return_train_score=True)
         searcher.fit(X_train, y_train)
         best_model, best_params, train_acc, val_acc = parse_searcher(searcher)
     else:

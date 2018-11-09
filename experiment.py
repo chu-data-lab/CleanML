@@ -1,7 +1,6 @@
 from train import train
 import numpy as np
 import utils
-from scipy.stats import expon, randint
 import json
 import argparse
 import logging
@@ -48,15 +47,16 @@ files_dict = {  "missing_values": ["dirty", "clean_impute_mean_mode", "clean_imp
                 "mislabel":["dirty", "clean"]}
 
 # datasets = ["Marketing", "Airbnb", "Titanic", "EGG", "USCensus", "Sensor", "Credit", "KDD", "Movie"]
-datasets = ["Movie", "Food"]
 models = [  "linear_regression", "logistic_regression", "decision_tree_regression", 
             "decision_tree_classification", "linear_svm", "adaboost_classification", 
             "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
             "random_forest_regression", "guassian_naive_bayes"]
 
-
+datasets = ["Titanic"]
+models = ["logistic_regression"]
 
 result = utils.load_result()
+
 for dataset_name in datasets:
     dataset = utils.get_dataset(dataset_name)
     for error_type in dataset["error_types"]:
@@ -77,15 +77,34 @@ for dataset_name in datasets:
                 estimator = model["estimator"]
 
                 if "params" in model.keys():
+                    # Coarse
                     if model["params_space"] == "log":
-                        params_dist = {model['params']:expon(scale=100)}
+                        param_grid = {model['params']: 10 ** np.random.uniform(-5, 5, 20)}
                     if model["params_space"] == "int":
-                        params_dist = {model['params']:randint(1, 100)}
+                        param_grid = {model['params']: np.random.randint(1, 100, 20)}
+                    
+                    special = (dataset_name == 'IMDB')
+                    result_coarse = train(dataset_name, error_type, file, estimator, param_grid, args.cpu, special)
+                    val_acc_coarse = result_coarse['val_acc']
+                    
+                    # Fine
+                    best_param_coarse = result_coarse['best_params'][model['params']]
+                    if model["params_space"] == "log":
+                        base = np.log10(best_param_coarse)
+                        param_grid = {model['params']: np.linspace(10**(base-0.5), 10**(base+0.5), 20)}
+                    if model["params_space"] == "int":
+                        low = max(best_param_coarse - 10, 1)
+                        param_grid = {model['params']: np.linspace(low, low + 20, 20).astype(int)}
+
+                    result_fine = train(dataset_name, error_type, file, estimator, param_grid, args.cpu, special)
+                    val_acc_fine = result_fine['val_acc']
+
+                    if val_acc_fine > val_acc_coarse:
+                        result_dict = result_fine
+                    else:
+                        result_dict = result_coarse
                 else:
-                    params_dist = None
-                
-                special = (dataset_name == 'IMDB')
-                result_dict = train(dataset_name, error_type, file, estimator, params_dist, args.cpu, special)
+                    result_dict = train(dataset_name, error_type, file, estimator, None, args.cpu, special)
 
                 print("Best params {}. Best val acc: {}".format(result_dict["best_params"], result_dict["val_acc"]))
                 if not args.nosave:

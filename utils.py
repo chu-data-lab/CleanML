@@ -108,28 +108,8 @@ def get_test_files(error_type, train_file):
     file_type = train_file[0:5]
     if file_type == "clean":
         return ["dirty", train_file]
-
-    if error_type == "missing_values":
-        return ["dirty", 
-                "clean_impute_mean_mode", 
-                "clean_impute_mean_dummy", 
-                "clean_impute_median_mode", 
-                "clean_impute_median_dummy", 
-                "clean_impute_mode_mode", 
-                "clean_impute_mode_dummy"]
-    elif error_type == "outliers":
-        return ["dirty", 
-                 "clean_SD_delete", 
-                 "clean_iso_forest_delete", 
-                 "clean_IQR_delete", 
-                 "clean_SD_impute_mean_dummy", 
-                 "clean_IQR_impute_mean_dummy", 
-                 "clean_iso_forest_impute_mean_dummy", 
-                 "clean_SD_impute_median_dummy",
-                 "clean_IQR_impute_median_dummy", 
-                 "clean_iso_forest_impute_median_dummy"]
     else:
-        return ["dirty", "clean"]
+        return get_filenames(error_type)
 
 def delete_result(dataset_name):
     result = load_result()
@@ -141,3 +121,28 @@ def delete_result(dataset_name):
     for k in del_key:
         del result[k]
     json.dump(result, open('./result.json', 'w'))
+
+def get_filenames(error_type):
+    if error_type == 'missing_values':
+        filenames = ["dirty", 
+                    "clean_impute_mean_mode", 
+                    "clean_impute_mean_dummy", 
+                    "clean_impute_median_mode", 
+                    "clean_impute_median_dummy", 
+                    "clean_impute_mode_mode", 
+                    "clean_impute_mode_dummy"]
+    elif error_type == 'outliers':
+        filenames = ["dirty", 
+                     "clean_SD_delete", 
+                     "clean_iso_forest_delete", 
+                     "clean_IQR_delete", 
+                     "clean_SD_impute_mean_dummy", 
+                     "clean_IQR_impute_mean_dummy", 
+                     "clean_iso_forest_impute_mean_dummy", 
+                     "clean_SD_impute_median_dummy",
+                     "clean_IQR_impute_median_dummy", 
+                     "clean_iso_forest_impute_median_dummy"]
+    else:
+        filenames = ["dirty", "clean"]
+    return filenames
+

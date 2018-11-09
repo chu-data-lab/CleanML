@@ -54,7 +54,7 @@ res = utils.load_result()
 for ml_type in ["classification", "regression"]:
     result = {}
     for k, v in res.items():
-        dataset, error, file, model = k.split('/')
+        dataset, error, file, model, seed = k.split('/')
         key = (dataset, error, file, model)
 
         train_acc = "{:.6f}".format(v['train_acc'])

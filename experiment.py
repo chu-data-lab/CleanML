@@ -52,8 +52,6 @@ models = [  "linear_regression", "logistic_regression", "decision_tree_regressio
             "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
             "random_forest_regression", "guassian_naive_bayes"]
 
-datasets = ["Credit", "KDD"]
-
 result = utils.load_result()
 for dataset_name in datasets:
     dataset = utils.get_dataset(dataset_name)

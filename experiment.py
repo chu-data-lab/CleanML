@@ -31,10 +31,12 @@ file:
 """
 parser = argparse.ArgumentParser()
 parser.add_argument('--cpu', default=1, type=int)
+parser.add_argument('--log', default=False, action='store_true')
 args = parser.parse_args()
 # warnings.simplefilter("ignore")
-logging.captureWarnings(True)
-logging.basicConfig(filename='logging_{}.log'.format(datetime.datetime.now()),level=logging.DEBUG)
+if args.log:
+    logging.captureWarnings(True)
+    logging.basicConfig(filename='logging_{}.log'.format(datetime.datetime.now()),level=logging.DEBUG)
 np.random.seed(1)
 
 # error_types = ["missing_values", "outliers", "duplicates", "inconsistency", "mislabel"]
@@ -49,6 +51,8 @@ models = [  "linear_regression", "logistic_regression", "decision_tree_regressio
             "decision_tree_classification", "linear_svm", "adaboost_classification", 
             "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
             "random_forest_regression", "guassian_naive_bayes"]
+
+datasets = ["Credit", "KDD"]
 
 result = utils.load_result()
 for dataset_name in datasets:

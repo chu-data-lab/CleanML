@@ -130,3 +130,14 @@ def get_test_files(error_type, train_file):
                  "clean_iso_forest_impute_median_dummy"]
     else:
         return ["dirty", "clean"]
+
+def delete_result(dataset_name):
+    result = load_result()
+    del_key = []
+    for k, v in result.items():
+        dataset, error, file, model = k.split('/')
+        if dataset == dataset_name:
+            del_key.append(k)
+    for k in del_key:
+        del result[k]
+    json.dump(result, open('./result.json', 'w'))

@@ -26,9 +26,6 @@ def text_embedding(corpus_train, corpus_test_list, y_train):
 
 def preprocess(dataset, X_train, y_train, X_test_list, y_test_list):
     n_test_files = len(X_test_list)
-    n_tr = X_train.shape[0]
-    n_te_list = [X_test.shape[0] for X_test in X_test_list]
-    test_split = np.cumsum(n_te_list)[:-1]
 
     if "drop_variables" in dataset.keys():
         X_train.drop(columns=dataset['drop_variables'], inplace=True)
@@ -37,6 +34,10 @@ def preprocess(dataset, X_train, y_train, X_test_list, y_test_list):
 
     if "class_imbalance" in dataset.keys() and dataset["class_imbalance"]:
         X_train, y_train = down_sample(X_train, y_train)
+
+    n_tr = X_train.shape[0]
+    n_te_list = [X_test.shape[0] for X_test in X_test_list]
+    test_split = np.cumsum(n_te_list)[:-1]
 
     y = pd.concat([y_train, *y_test_list], axis=0)
     if dataset['ml_task'] == 'classification':
@@ -72,12 +73,12 @@ def down_sample(X, y):
     X_rus, y_rus = rus.fit_sample(X, y)
     X_train = pd.DataFrame(X_rus, columns=X.columns)
     y_train = pd.DataFrame(y_rus)
-    return X, y
+
+    return X_train, y_train
 
 def load_data(dataset, train_dir, test_dir_list):
     train = utils.load_df(dataset, train_dir)
     test_list = [utils.load_df(dataset, test_dir) for test_dir in test_dir_list]
-
     label = dataset['label']
     features = [v for v in train.columns if not v == label]
 
@@ -85,7 +86,6 @@ def load_data(dataset, train_dir, test_dir_list):
     X_test_list = [test.loc[:, features] for test in test_list]
     y_test_list = [test.loc[:, label] for test in test_list]
     X_train, y_train, X_test_list, y_test_list = preprocess(dataset, X_train, y_train, X_test_list, y_test_list)
-    
     return X_train, y_train, X_test_list, y_test_list  
 
 def parse_searcher(searcher):

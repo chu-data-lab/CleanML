@@ -66,11 +66,11 @@ def preprocess(dataset, X_train, y_train, X_test_list, y_test_list, normalize):
                 X_test_list[i] = pd.concat([X_test_list[i], x_test_list[i]], axis=1)
 
     X = pd.concat([X_train, *X_test_list], axis=0)
-    X = pd.get_dummies(X, drop_first=True).values
+    X = pd.get_dummies(X, drop_first=True).values.astype(float)
 
     X_train = X[:n_tr, :]
     X_test_list = np.split(X[n_tr:], test_split)
-
+    
     if normalize:
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train)

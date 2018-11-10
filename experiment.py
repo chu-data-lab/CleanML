@@ -95,7 +95,7 @@ for dataset, error_type, file, model in jobs:
         if model["params_type"] == "int":
             result_dict['best_params'][model['params']] *= 1.0
     
-    print("Best params {}. Best val acc: {}".format(result_dict["best_params"], result_dict["val_acc"]))
-
+    # print("Best params {}. Best val acc: {}".format(result_dict["best_params"], result_dict["val_acc"]))
+    print(result_dict)
     if not args.nosave:
         utils.save_result(key, result_dict)

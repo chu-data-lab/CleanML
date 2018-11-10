@@ -24,8 +24,8 @@ model_names = [ "linear_regression", "logistic_regression", "decision_tree_regre
                 "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
                 "random_forest_regression", "guassian_naive_bayes"]
 
-dataset_names = ["Titanic"]
-model_names = ["decision_tree_classification"]
+# dataset_names = ["Titanic"]
+# model_names = ["decision_tree_classification"]
 
 def get_coarse_grid(model):
     np.random.seed(args.seed)

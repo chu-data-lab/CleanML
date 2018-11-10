@@ -25,7 +25,7 @@ model_names = [ "linear_regression", "logistic_regression", "decision_tree_regre
                 "random_forest_regression", "guassian_naive_bayes"]
 
 dataset_names = ["Titanic"]
-model_names = ["adaboost_classification"]
+model_names = ["linear_svm"]
 
 def get_coarse_grid(model):
     np.random.seed(args.seed)
@@ -70,14 +70,15 @@ for dataset, error_type, file, model in jobs:
     logging.info("Processing {}".format(key))
     
     estimator = model["estimator"]
+    special = (dataset_name == 'IMDB')
+    normalize = (model_name == 'linear_svm')
 
     if "params" not in model.keys():
         result_dict = train(dataset_name, error_type, file, estimator, None, args.cpu, special)
     else:
         # Coarse round
         param_grid = get_coarse_grid(model)
-        special = (dataset_name == 'IMDB')
-        result_coarse = train(dataset_name, error_type, file, estimator, param_grid, args.cpu, special)
+        result_coarse = train(dataset_name, error_type, file, estimator, param_grid, args.cpu, special=special, normalize=normalize)
         val_acc_coarse = result_coarse['val_acc']
         
         # Fine round

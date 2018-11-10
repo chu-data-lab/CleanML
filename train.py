@@ -10,6 +10,7 @@ from imblearn.under_sampling import RandomUnderSampler
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 import pickle
+from sklearn.preprocessing import StandardScaler
 
 def text_embedding(corpus_train, corpus_test_list, y_train):
     vectorizer = TfidfVectorizer(stop_words='english')
@@ -25,7 +26,7 @@ def text_embedding(corpus_train, corpus_test_list, y_train):
     x_test_list = [pd.DataFrame(x_test.toarray(), columns=feature_names) for x_test in x_test_list]
     return x_train, x_test_list
 
-def preprocess(dataset, X_train, y_train, X_test_list, y_test_list):
+def preprocess(dataset, X_train, y_train, X_test_list, y_test_list, normalize):
     n_test_files = len(X_test_list)
 
     if "drop_variables" in dataset.keys():
@@ -69,6 +70,11 @@ def preprocess(dataset, X_train, y_train, X_test_list, y_test_list):
 
     X_train = X[:n_tr, :]
     X_test_list = np.split(X[n_tr:], test_split)
+
+    if normalize:
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test_list = [scaler.transform(X_test) for X_test in X_test_list]
     return X_train, y_train, X_test_list, y_test_list
 
 def down_sample(X, y):
@@ -79,7 +85,7 @@ def down_sample(X, y):
     y_train = y.iloc[indices]
     return X_train, y_train
 
-def load_data(dataset, train_dir, test_dir_list):
+def load_data(dataset, train_dir, test_dir_list, normalize):
     train = utils.load_df(dataset, train_dir)
     test_list = [utils.load_df(dataset, test_dir) for test_dir in test_dir_list]
     label = dataset['label']
@@ -88,7 +94,7 @@ def load_data(dataset, train_dir, test_dir_list):
     X_train, y_train = train.loc[:, features], train.loc[:, label]
     X_test_list = [test.loc[:, features] for test in test_list]
     y_test_list = [test.loc[:, label] for test in test_list]
-    X_train, y_train, X_test_list, y_test_list = preprocess(dataset, X_train, y_train, X_test_list, y_test_list)
+    X_train, y_train, X_test_list, y_test_list = preprocess(dataset, X_train, y_train, X_test_list, y_test_list, normalize)
     return X_train, y_train, X_test_list, y_test_list  
 
 def parse_searcher(searcher):
@@ -100,7 +106,7 @@ def parse_searcher(searcher):
     best_model = searcher.best_estimator_
     return best_model, best_params, train_acc, val_acc
 
-def train(dataset_name, error_type, train_file, estimator, param_gird, n_jobs=1, special=False):
+def train(dataset_name, error_type, train_file, estimator, param_gird, n_jobs=1, special=False, normalize=False):
     if special:
         X_train, y_train, X_test_list, y_test_list = load_imdb(dataset_name, error_type, train_file)
         test_files = ['dirty', 'clean']
@@ -109,7 +115,7 @@ def train(dataset_name, error_type, train_file, estimator, param_gird, n_jobs=1,
         train_dir = utils.get_dir(dataset, error_type, train_file + "_train.csv")
         test_files = utils.get_test_files(error_type, train_file)
         test_dir_list = [utils.get_dir(dataset, error_type, test_file + "_test.csv") for test_file in test_files]
-        X_train, y_train, X_test_list, y_test_list = load_data(dataset, train_dir, test_dir_list)
+        X_train, y_train, X_test_list, y_test_list = load_data(dataset, train_dir, test_dir_list, normalize)
 
     if param_gird is not None:
         searcher = GridSearchCV(estimator, param_gird, cv=5, n_jobs=n_jobs, return_train_score=True, iid=False)

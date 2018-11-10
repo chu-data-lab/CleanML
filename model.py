@@ -36,7 +36,7 @@ knn_clf = {
     "type": "classification",
     "params": "n_neighbors",
     "params_type": "int",
-    "params_range": [1, 200]
+    "params_range": [1, 100]
 }
 
 knn_reg = {
@@ -46,7 +46,7 @@ knn_reg = {
     "type": "regression",
     "params": "n_neighbors",
     "params_type": "int",
-    "params_range": [1, 200]
+    "params_range": [1, 100]
 }
 
 dt_reg = {
@@ -103,7 +103,7 @@ adaboost_reg = {
 random_forest_clf = {
     "name": "random_forest_classification",
     "fn": RandomForestClassifier,
-    "estimator": RandomForestClassifier(),
+    "estimator": RandomForestClassifier(n_estimators=100),
     "type": "classification",
     "params": "max_depth",
     "params_type": "int",
@@ -113,7 +113,7 @@ random_forest_clf = {
 random_forest_reg = {
     "name": "random_forest_regression",
     "fn": RandomForestRegressor,
-    "estimator": RandomForestRegressor(),
+    "estimator": RandomForestRegressor(n_estimators=100),
     "type": "regression",
     "params": "max_depth",
     "params_type": "int",

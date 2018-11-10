@@ -18,7 +18,7 @@ if args.log:
     logging.basicConfig(filename='logging_{}.log'.format(datetime.datetime.now()),level=logging.DEBUG)
 
 ## Set up
-dataset_names = ["Marketing", "Airbnb", "Titanic", "EGG", "USCensus", "Sensor", "Credit"]
+dataset_names = ["Titanic", "Marketing", "Airbnb", "EGG", "USCensus", "Sensor", "Credit"]
 model_names = [ "linear_regression", "logistic_regression", "decision_tree_regression", 
                 "decision_tree_classification", "adaboost_classification", 
                 "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",

@@ -24,8 +24,8 @@ model_names = [ "linear_regression", "logistic_regression", "decision_tree_regre
                 "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
                 "random_forest_regression", "guassian_naive_bayes"]
 
-# dataset_names = ["Titanic"]
-# model_names = ["linear_svm"]
+dataset_names = ["Titanic"]
+model_names = ["decision_tree_classification"]
 
 def get_coarse_grid(model):
     np.random.seed(args.seed)
@@ -43,7 +43,7 @@ def get_fine_grid(model, best_param_coarse):
         param_grid = {model['params']: np.linspace(10**(base-0.5), 10**(base+0.5), 20)}
     if model["params_type"] == "int":
         low = max(best_param_coarse - 10, 1)
-        param_grid = {model['params']: np.linspace(low, low + 20, 20).astype(int)}
+        param_grid = {model['params']: np.arange(low, low + 20)}
     return param_grid
 
 ## Training
@@ -93,6 +93,9 @@ for dataset, error_type, file, model in jobs:
             result_dict = result_coarse
 
     print("Best params {}. Best val acc: {}".format(result_dict["best_params"], result_dict["val_acc"]))
+
+    if model["params_type"] == "int":
+        result_dict['best_params'][model['params']] *= 1.0
     
     if not args.nosave:
         utils.save_result(key, result_dict)

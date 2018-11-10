@@ -20,12 +20,12 @@ if args.log:
 ## Set up
 dataset_names = ["Marketing", "Airbnb", "Titanic", "EGG", "USCensus", "Sensor", "Credit"]
 model_names = [ "linear_regression", "logistic_regression", "decision_tree_regression", 
-                "decision_tree_classification", "linear_svm", "adaboost_classification", 
+                "decision_tree_classification", "adaboost_classification", 
                 "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
                 "random_forest_regression", "guassian_naive_bayes"]
 
-dataset_names = ["Titanic"]
-model_names = ["linear_svm"]
+# dataset_names = ["Titanic"]
+# model_names = ["linear_svm"]
 
 def get_coarse_grid(model):
     np.random.seed(args.seed)

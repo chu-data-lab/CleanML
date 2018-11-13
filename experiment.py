@@ -19,7 +19,7 @@ if args.log:
 
 ## Set up
 # dataset_names = ["Titanic", "Marketing", "Airbnb", "EGG", "USCensus", "Sensor", "Credit"]
-dataset_names = ['Food', 'Movie', 'KDD']
+dataset_names = ['Airbnb', 'Movie', 'KDD']
 model_names = [ "linear_regression", "logistic_regression", "decision_tree_regression", 
                 "decision_tree_classification", "adaboost_classification", 
                 "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",

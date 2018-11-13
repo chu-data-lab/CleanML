@@ -115,7 +115,7 @@ def delete_result(dataset_name):
     result = load_result()
     del_key = []
     for k, v in result.items():
-        dataset, error, file, model = k.split('/')
+        dataset, error, file, model, seed = k.split('/')
         if dataset == dataset_name:
             del_key.append(k)
     for k in del_key:

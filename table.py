@@ -55,7 +55,7 @@ for ml_type in ["classification", "regression"]:
     result = {}
     for k, v in res.items():
         dataset, error, file, model, seed = k.split('/')
-        key = (dataset, error, file, model)
+        key = (dataset, error, file, model, seed)
 
         train_acc = "{:.6f}".format(v['train_acc'])
         val_acc = "{:.6f}".format(v['val_acc'])
@@ -88,9 +88,25 @@ for ml_type in ["classification", "regression"]:
             clean_test_acc = "{:.6f}".format(v['clean_test_acc'])
 
         value = [train_acc, val_acc, dirty_test_acc, clean_test_acc]
+
         if utils.get_model(model)['type'] == ml_type:
             result[key] = value
 
-    table_generator = TableGenerator(result)
+    seeds = list({seed for dataset, error, file, model, seed in result.keys()})
+
+    combine = {}
+    for s in seeds:
+        for k, v in result.items():
+            dataset, error, file, model, seed = k
+            if seed != s:
+                continue
+            key = (dataset, error, file, model)
+            if key not in combine.keys():
+                combine[key] = v
+            else:
+                for i, acc in enumerate(v):
+                    combine[key][i] += ", {}".format(acc) 
+
+    table_generator = TableGenerator(combine)
     table_generator.writeToDataframe("{}_result.xlsx".format(ml_type))
 

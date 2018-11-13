@@ -32,7 +32,7 @@ Airbnb = {
     "data_dir": "Airbnb",
     "error_types": ['missing_values', 'outliers', 'duplicates'],
     "label": 'Rating',
-    "ml_task": "regression",
+    "ml_task": "classification",
     'key_columns': ['latitude', 'longitude'],
     "manual_clean_duplicates": False
 }
@@ -124,7 +124,7 @@ IMDB = {
 }
 
 datasets = [Airbnb, USCensus, Credit, EGG, Titanic, KDD,
-            Marketing, Sensor, Movie, Food, IMDB]
+            Marketing, Sensor, Movie, Food]
 
 # Citation, Restaurant,Food, Movie
 

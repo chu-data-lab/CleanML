@@ -36,7 +36,7 @@ knn_clf = {
     "type": "classification",
     "params": "n_neighbors",
     "params_type": "int",
-    "params_range": [1, 100]
+    "params_range": [1, 95]
 }
 
 knn_reg = {

@@ -11,6 +11,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 import pickle
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import f1_score
 
 def text_embedding(corpus_train, corpus_test_list, y_train):
     vectorizer = TfidfVectorizer(stop_words='english')
@@ -107,11 +108,11 @@ def parse_searcher(searcher):
     return best_model, best_params, train_acc, val_acc
 
 def train(dataset_name, error_type, train_file, estimator, param_gird, n_jobs=1, special=False, normalize=False):
+    dataset = utils.get_dataset(dataset_name)
     if special:
-        X_train, y_train, X_test_list, y_test_list = load_imdb(dataset_name, error_type, train_file)
+        X_train, y_train, X_test_list, y_test_list = load_imdb(dataset, error_type, train_file)
         test_files = ['dirty', 'clean']
     else:
-        dataset = utils.get_dataset(dataset_name)
         train_dir = utils.get_dir(dataset, error_type, train_file + "_train.csv")
         test_files = utils.get_test_files(error_type, train_file)
         test_dir_list = [utils.get_dir(dataset, error_type, test_file + "_test.csv") for test_file in test_files]
@@ -132,12 +133,18 @@ def train(dataset_name, error_type, train_file, estimator, param_gird, n_jobs=1,
 
     for X_test, y_test, file in zip(X_test_list, y_test_list, test_files):
         test_acc = best_model.score(X_test, y_test)
-        result_dict[file + "_test_acc"] = test_acc        
+        result_dict[file + "_test_acc"] = test_acc
+        if dataset['ml_task'] == "classification":
+            y_pred = best_model.predict(X_test)
+            if len(set(y_test)) > 2:
+                test_f1 = f1_score(y_test, y_pred, average='macro')
+            else:
+                test_f1 = f1_score(y_test, y_pred)
+                result_dict[file + "_test_f1"] = test_f1  
     return result_dict
 
 # Special Case for IMDB
-def load_imdb(dataset_name, error_type, train_file):
-    dataset = utils.get_dataset(dataset_name)
+def load_imdb(dataset, error_type, train_file):
     file_dir = utils.get_dir(dataset, error_type)
     file_predix= utils.get_dir(dataset, error_type, train_file)
     X_train = pickle.load(open(file_predix + '_X_train.p', 'rb'), encoding='latin1').toarray()

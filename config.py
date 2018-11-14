@@ -32,7 +32,8 @@ Airbnb = {
     "data_dir": "Airbnb",
     "error_types": ['missing_values', 'outliers', 'duplicates'],
     "label": 'Rating',
-    "ml_task": "regression",
+    "categorical_variables": ['Rating'],
+    "ml_task": "classification",
     'key_columns': ['latitude', 'longitude'],
     "manual_clean_duplicates": False
 }

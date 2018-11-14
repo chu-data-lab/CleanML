@@ -5,88 +5,11 @@ import config
 import utils
 import sys
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
-from sklearn.preprocessing import LabelEncoder
-from imblearn.under_sampling import RandomUnderSampler
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_selection import SelectKBest, chi2
 import pickle
-from sklearn.preprocessing import StandardScaler
+import preprocess
 from sklearn.metrics import f1_score
 
-def text_embedding(corpus_train, corpus_test_list, y_train):
-    vectorizer = TfidfVectorizer(stop_words='english')
-    x_train = vectorizer.fit_transform(corpus_train)
-    x_test_list = [vectorizer.transform(corpus_test) for corpus_test in corpus_test_list]
-    feature_names = vectorizer.get_feature_names()
-
-    ch2 = SelectKBest(chi2, k=2000)
-    x_train = ch2.fit_transform(x_train, y_train)
-    x_test_list = [ch2.transform(x_test) for x_test in x_test_list]
-    feature_names = [feature_names[i] for i in ch2.get_support(indices=True)]
-    x_train = pd.DataFrame(x_train.toarray(), columns=feature_names)
-    x_test_list = [pd.DataFrame(x_test.toarray(), columns=feature_names) for x_test in x_test_list]
-    return x_train, x_test_list
-
-def preprocess(dataset, X_train, y_train, X_test_list, y_test_list, normalize):
-    n_test_files = len(X_test_list)
-
-    if "drop_variables" in dataset.keys():
-        X_train.drop(columns=dataset['drop_variables'], inplace=True)
-        for i in range(n_test_files):
-            X_test_list[i].drop(columns=dataset['drop_variables'], inplace=True)
-
-    if "class_imbalance" in dataset.keys() and dataset["class_imbalance"]:
-        X_train, y_train = down_sample(X_train, y_train)
-
-    n_tr = X_train.shape[0]
-    n_te_list = [X_test.shape[0] for X_test in X_test_list]
-    test_split = np.cumsum(n_te_list)[:-1]
-
-    y = pd.concat([y_train, *y_test_list], axis=0)
-
-    if dataset['ml_task'] == 'classification':
-        le = LabelEncoder()
-        y = le.fit_transform(y.values)
-    y_train = y[:n_tr]
-    y_test_list = np.split(y[n_tr:], test_split)
-
-    if "text_variables" in dataset.keys():
-        text_columns = dataset["text_variables"]
-        text_train = pd.DataFrame(X_train, columns=text_columns)
-        text_test_list = [pd.DataFrame(X_test, columns=text_columns) for X_test in X_test_list]
-        X_train.drop(columns=text_columns, inplace=True)
-        for i in range(n_test_files):
-            X_test_list[i].drop(columns=text_columns, inplace=True)
-
-        for tc in text_columns:
-            corpus_train = text_train.loc[:, tc]
-            corpus_test_list = [text_test.loc[:, tc] for text_test in text_test_list]
-            x_train, x_test_list = text_embedding(corpus_train, corpus_test_list, y_train)
-            X_train = pd.concat([X_train, x_train], axis=1)
-            for i in range(n_test_files):
-                X_test_list[i] = pd.concat([X_test_list[i], x_test_list[i]], axis=1)
-
-    X = pd.concat([X_train, *X_test_list], axis=0)
-    X = pd.get_dummies(X, drop_first=True).values.astype(float)
-
-    X_train = X[:n_tr, :]
-    X_test_list = np.split(X[n_tr:], test_split)
-    
-    if normalize:
-        scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_test_list = [scaler.transform(X_test) for X_test in X_test_list]
-    return X_train, y_train, X_test_list, y_test_list
-
-def down_sample(X, y):
-    rus = RandomUnderSampler()
-    X_rus, y_rus = rus.fit_sample(X, y)
-    indices = rus.sample_indices_
-    X_train = X.iloc[indices, :]
-    y_train = y.iloc[indices]
-    return X_train, y_train
-
-def load_data(dataset, train_dir, test_dir_list, normalize):
+def load_data(dataset, train_dir, test_dir_list, normalize, down_sample_seed=1):
     train = utils.load_df(dataset, train_dir)
     test_list = [utils.load_df(dataset, test_dir) for test_dir in test_dir_list]
     label = dataset['label']
@@ -95,7 +18,9 @@ def load_data(dataset, train_dir, test_dir_list, normalize):
     X_train, y_train = train.loc[:, features], train.loc[:, label]
     X_test_list = [test.loc[:, features] for test in test_list]
     y_test_list = [test.loc[:, label] for test in test_list]
-    X_train, y_train, X_test_list, y_test_list = preprocess(dataset, X_train, y_train, X_test_list, y_test_list, normalize)
+
+    X_train, y_train, X_test_list, y_test_list = \
+        preprocess.preprocess(dataset, X_train, y_train, X_test_list, y_test_list, normalize, down_sample_seed)
     return X_train, y_train, X_test_list, y_test_list  
 
 def parse_searcher(searcher):
@@ -107,7 +32,8 @@ def parse_searcher(searcher):
     best_model = searcher.best_estimator_
     return best_model, best_params, train_acc, val_acc
 
-def train(dataset_name, error_type, train_file, estimator, param_gird, n_jobs=1, special=False, normalize=False):
+def train(dataset_name, error_type, train_file, estimator, param_gird, random_state=1, n_jobs=1, special=False, normalize=False):
+    np.random.seed(random_state)
     dataset = utils.get_dataset(dataset_name)
     if special:
         X_train, y_train, X_test_list, y_test_list = load_imdb(dataset, error_type, train_file)
@@ -116,7 +42,8 @@ def train(dataset_name, error_type, train_file, estimator, param_gird, n_jobs=1,
         train_dir = utils.get_dir(dataset, error_type, train_file + "_train.csv")
         test_files = utils.get_test_files(error_type, train_file)
         test_dir_list = [utils.get_dir(dataset, error_type, test_file + "_test.csv") for test_file in test_files]
-        X_train, y_train, X_test_list, y_test_list = load_data(dataset, train_dir, test_dir_list, normalize)
+        down_sample_seed = np.random.randint(1000)
+        X_train, y_train, X_test_list, y_test_list = load_data(dataset, train_dir, test_dir_list, normalize, down_sample_seed)
 
     if param_gird is not None:
         searcher = GridSearchCV(estimator, param_gird, cv=5, n_jobs=n_jobs, return_train_score=True, iid=False)
@@ -154,8 +81,3 @@ def load_imdb(dataset, error_type, train_file):
     dirty_X_test = pickle.load(open(file_dir + '/dirty_X_test.p', 'rb'), encoding='latin1').toarray()
     dirty_y_test = pickle.load(open(file_dir + '/dirty_y_test.p', 'rb'), encoding='latin1')
     return X_train, y_train, [dirty_X_test, clean_X_test], [dirty_y_test, clean_y_test]
-
-
-
-
-

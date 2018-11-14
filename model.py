@@ -83,11 +83,11 @@ linear_svm = {
 adaboost_clf = {
     "name": "adaboost_classification",
     "fn": AdaBoostClassifier,
-    "estimator": AdaBoostClassifier(),
+    "estimator": AdaBoostClassifier(n_estimators=200),
     "type": "classification",
     "params": "learning_rate",
     "params_type": "real",
-    "params_range": [-10, -1]
+    "params_range": [-9, 1]
 }
 
 adaboost_reg = {

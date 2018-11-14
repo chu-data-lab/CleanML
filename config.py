@@ -48,6 +48,7 @@ DfD = {
 Titanic = {
     "data_dir": "Titanic",
     "error_types": ['missing_values'],
+    "drop_variables": ['PassengerId', 'Name'],
     "label": "Survived",
     "categorical_variables":["Survived"],
     "ml_task": "classification"

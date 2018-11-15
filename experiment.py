@@ -14,13 +14,13 @@ parser.add_argument('--nosave', default=False, action='store_true')
 args = parser.parse_args()
 
 ## Set up
-dataset_names = ["Titanic", "Marketing", "EGG", "USCensus", "Credit", "KDD", "Movie"]
+dataset_names = ["Sensor", "Movie", "Food", "IMDB"]
 model_names = [ "linear_regression", "logistic_regression", "decision_tree_regression", 
                 "decision_tree_classification", "adaboost_classification", 
                 "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
                 "random_forest_regression", "guassian_naive_bayes"]
 
-# dataset_names = ["Titanic"]
+# dataset_names = ["Sensor"]
 # model_names = ["logistic_regression"]
 
 if args.log:

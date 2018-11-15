@@ -8,6 +8,7 @@ from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 import pickle
 import preprocess
 from sklearn.metrics import f1_score
+from sklearn.feature_selection import SelectKBest, chi2
 
 def load_data(dataset, train_dir, test_dir_list, normalize, down_sample_seed=1):
     train = utils.load_df(dataset, train_dir)
@@ -74,10 +75,19 @@ def train(dataset_name, error_type, train_file, estimator, param_gird, random_st
 def load_imdb(dataset, error_type, train_file):
     file_dir = utils.get_dir(dataset, error_type)
     file_predix= utils.get_dir(dataset, error_type, train_file)
-    X_train = pickle.load(open(file_predix + '_X_train.p', 'rb'), encoding='latin1').toarray()
+    X_train_raw = pickle.load(open(file_predix + '_X_train.p', 'rb'), encoding='latin1').toarray()
     y_train = pickle.load(open(file_predix + '_y_train.p', 'rb'), encoding='latin1')
+
     clean_X_test = pickle.load(open(file_dir + '/clean_X_test.p', 'rb'), encoding='latin1').toarray()
     clean_y_test = pickle.load(open(file_dir + '/clean_y_test.p', 'rb'), encoding='latin1')
     dirty_X_test = pickle.load(open(file_dir + '/dirty_X_test.p', 'rb'), encoding='latin1').toarray()
     dirty_y_test = pickle.load(open(file_dir + '/dirty_y_test.p', 'rb'), encoding='latin1')
-    return X_train, y_train, [dirty_X_test, clean_X_test], [dirty_y_test, clean_y_test]
+    X_test_list_raw = [dirty_X_test, clean_X_test]
+    y_test_list = [dirty_y_test, clean_y_test]
+    
+    print(X_train_raw.shape)
+    ch2 = SelectKBest(chi2, k=200)
+    X_train = ch2.fit_transform(X_train_raw, y_train)
+    print(X_train.shape)
+    X_test_list = [ch2.transform(x_test) for x_test in x_test_list_raw]
+    return X_train, y_train, X_test_list, y_test_list

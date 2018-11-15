@@ -40,7 +40,7 @@ Airbnb = {
 
 DfD = {
     "data_dir": "DfD",
-    "error_types": ['inconsistency', 'mislabel'],
+    "error_types": ['inconsistency'],
     "categorical_variables":[],
     "label": "Donate",
     "ml_task": "classification"
@@ -93,8 +93,8 @@ Sensor = {
     "data_dir": "Sensor",
     "error_types": ['outliers'],
     "categorical_variables": ['moteid'],
-    "label": 'temperature',
-    "ml_task": "regression"
+    "label": 'moteid',
+    "ml_task": "classification"
 }
 
 Movie = {

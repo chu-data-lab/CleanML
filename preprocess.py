@@ -35,13 +35,14 @@ def encode_cat_label(y_train, y_test_list):
 
 def text_embedding(corpus_train, corpus_test_list, y_train):
     vectorizer = TfidfVectorizer(stop_words='english')
-    x_train = vectorizer.fit_transform(corpus_train)
-    x_test_list = [vectorizer.transform(corpus_test) for corpus_test in corpus_test_list]
+    x_train_raw = vectorizer.fit_transform(corpus_train)
+    x_test_list_raw = [vectorizer.transform(corpus_test) for corpus_test in corpus_test_list]
     feature_names = vectorizer.get_feature_names()
 
-    ch2 = SelectKBest(chi2, k=2000)
-    x_train = ch2.fit_transform(x_train, y_train)
-    x_test_list = [ch2.transform(x_test) for x_test in x_test_list]
+    ch2 = SelectKBest(chi2, k=500)
+    x_train = ch2.fit_transform(x_train_raw, y_train)
+    x_test_list = [ch2.transform(x_test) for x_test in x_test_list_raw]
+    
     feature_names = [feature_names[i] for i in ch2.get_support(indices=True)]
     x_train = pd.DataFrame(x_train.toarray(), columns=feature_names)
     x_test_list = [pd.DataFrame(x_test.toarray(), columns=feature_names) for x_test in x_test_list]

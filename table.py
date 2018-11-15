@@ -54,13 +54,17 @@ res = utils.load_result()
 for ml_type in ["classification"]:
     result = {}
     for k, v in res.items():
+        print(k)
         dataset, error, file, model, seed = k.split('/')
         key = (dataset, error, file, model, seed)
 
         train_acc = "{:.6f}".format(v['train_acc'])
         val_acc = "{:.6f}".format(v['val_acc'])
         dirty_test_acc = "{:.6f}".format(v['dirty_test_acc'])
-        dirty_test_f1 = "{:.6f}".format(v['dirty_test_f1'])
+        if 'dirty_test_f1' in v:
+            dirty_test_f1 = "{:.6f}".format(v['dirty_test_f1'])
+        else:
+            dirty_test_f1 = "nan"
         if error == 'missing_values' and file == 'dirty':
             clean_test_acc = "{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}".format(v["clean_impute_mode_mode_test_acc"], 
                                                                              v["clean_impute_mode_dummy_test_acc"], 
@@ -68,12 +72,15 @@ for ml_type in ["classification"]:
                                                                              v["clean_impute_median_dummy_test_acc"], 
                                                                              v["clean_impute_mean_mode_test_acc"], 
                                                                              v["clean_impute_mean_dummy_test_acc"])
-            clean_test_f1 = "{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}".format(v["clean_impute_mode_mode_test_f1"], 
-                                                             v["clean_impute_mode_dummy_test_f1"], 
-                                                             v["clean_impute_median_mode_test_f1"], 
-                                                             v["clean_impute_median_dummy_test_f1"], 
-                                                             v["clean_impute_mean_mode_test_f1"], 
-                                                             v["clean_impute_mean_dummy_test_f1"])
+            if 'dirty_test_f1' in v:
+                clean_test_f1 = "{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}".format(v["clean_impute_mode_mode_test_f1"], 
+                                                                 v["clean_impute_mode_dummy_test_f1"], 
+                                                                 v["clean_impute_median_mode_test_f1"], 
+                                                                 v["clean_impute_median_dummy_test_f1"], 
+                                                                 v["clean_impute_mean_mode_test_f1"], 
+                                                                 v["clean_impute_mean_dummy_test_f1"])
+            else:
+                clean_test_f1 = "nan"
         elif error == 'outliers' and file == 'dirty':
             clean_test_acc = "{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}".format(v["clean_iso_forest_impute_median_dummy_test_acc"],
                                                                              v["clean_IQR_impute_mean_dummy_test_acc"], 
@@ -84,7 +91,8 @@ for ml_type in ["classification"]:
                                                                              v["clean_IQR_impute_median_dummy_test_acc"],
                                                                              v["clean_IQR_impute_mean_dummy_test_acc"],
                                                                              v["clean_IQR_delete_test_acc"])
-            clean_test_f1 = "{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}".format(v["clean_iso_forest_impute_median_dummy_test_f1"],
+            if 'dirty_test_f1' in v:
+                clean_test_f1 = "{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}".format(v["clean_iso_forest_impute_median_dummy_test_f1"],
                                                              v["clean_IQR_impute_mean_dummy_test_f1"], 
                                                              v["clean_iso_forest_delete_test_f1"], 
                                                              v["clean_SD_impute_median_dummy_test_f1"],
@@ -93,9 +101,14 @@ for ml_type in ["classification"]:
                                                              v["clean_IQR_impute_median_dummy_test_f1"],
                                                              v["clean_IQR_impute_mean_dummy_test_f1"],
                                                              v["clean_IQR_delete_test_f1"])
+            else:
+                clean_test_f1 = "nan"
         else:
             clean_test_acc = "{:.6f}".format(v[file + '_test_acc'])
-            clean_test_f1 = "{:.6f}".format(v[file + '_test_f1'])
+            if 'dirty_test_f1' in v:
+                clean_test_f1 = "{:.6f}".format(v[file + '_test_f1'])
+            else:
+                clean_test_f1 = "nan"
 
         value = [train_acc, val_acc, dirty_test_acc, clean_test_acc, dirty_test_f1, clean_test_f1]
 

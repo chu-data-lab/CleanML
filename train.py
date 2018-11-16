@@ -58,7 +58,6 @@ def train(dataset_name, error_type, train_file, estimator, param_gird, random_st
         val_acc = np.nan
 
     result_dict = {"best_params": best_params, "train_acc":train_acc, "val_acc": val_acc}
-
     for X_test, y_test, file in zip(X_test_list, y_test_list, test_files):
         test_acc = best_model.score(X_test, y_test)
         result_dict[file + "_test_acc"] = test_acc
@@ -85,7 +84,6 @@ def load_imdb(dataset, error_type, train_file):
     X_test_list_raw = [dirty_X_test, clean_X_test]
     y_test_list = [dirty_y_test, clean_y_test]
     
-    print(X_train_raw.shape)
     ch2 = SelectKBest(chi2, k=200)
     X_train = ch2.fit_transform(X_train_raw, y_train)
     print(X_train.shape)

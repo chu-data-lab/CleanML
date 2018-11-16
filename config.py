@@ -99,7 +99,7 @@ Sensor = {
 
 Movie = {
     "data_dir": "Movie",
-    "error_types": ['duplicates', 'inconsistency'],
+    "error_types": ['inconsistency', 'duplicates'],
     "key_columns": ["title", "year"],
     "categorical_variables": ["genres"],
     "text_variables": ["title"],
@@ -110,7 +110,7 @@ Movie = {
 
 Food = {
     "data_dir": "Food",
-    "error_types": ['missing_values', 'inconsistency'],
+    "error_types": ['inconsistency'],
     "categorical_variables": ['Violations'],
     "label": "Results",
     "ml_task": "classification",
@@ -126,7 +126,7 @@ IMDB = {
 }
 
 datasets = [Airbnb, USCensus, Credit, EGG, Titanic, KDD,
-            Marketing, Sensor, Movie, Food, IMDB]
+            Marketing, Sensor, Movie, Food]
 
 # Citation, Restaurant,Food, Movie
 

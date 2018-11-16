@@ -119,6 +119,7 @@ def delete_result(dataset_name):
         if dataset == dataset_name:
             del_key.append(k)
     for k in del_key:
+        print("delete {}".format(k))
         del result[k]
     json.dump(result, open('./result.json', 'w'))
 

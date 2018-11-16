@@ -20,8 +20,8 @@ class TableGenerator(object):
         for k, v in self.dicts.items():
             if k[1]==error:
                 new_dict[k] = v
-        self.models = list(set([k[3] for k in new_dict.keys()]))
-        self.data = list(set([k[0] for k in new_dict.keys()]))
+        self.models = sorted(list(set([k[3] for k in new_dict.keys()])))[::-1]
+        self.data = sorted(list(set([k[0] for k in new_dict.keys()])))[::-1]
         self.file= sorted(list(set([k[2] for k in new_dict.keys()])))[::-1]
 
     def writeToDataframe(self, output_dir):
@@ -34,7 +34,7 @@ class TableGenerator(object):
                 for eachfile in self.file:
                     values=[]
                     for eachmodel in self.models:
-                        value=self.dicts.get(tuple([eachdata,error, eachfile, eachmodel]))
+                        value=self.dicts.get(tuple([eachdata, error, eachfile, eachmodel]))
                         if value==None:
                             value=[value]*4
                         values.append(value)
@@ -48,87 +48,47 @@ class TableGenerator(object):
             index = pd.MultiIndex.from_product([self.data,self.file])
             df.index=index
             df.to_excel(writer, '%s'%error)
-            writer.save()
+        writer.save()
 
-res = utils.load_result()
-for ml_type in ["classification"]:
-    result = {}
-    for k, v in res.items():
-        print(k)
-        dataset, error, file, model, seed = k.split('/')
-        key = (dataset, error, file, model, seed)
+def get_result(result_dict, key, precision=6):
+    if key in result_dict.keys():
+        s = "{1:.{0}f}".format(precision, result_dict[key])
+    else:
+        s = "nan"
+    return s
 
-        train_acc = "{:.6f}".format(v['train_acc'])
-        val_acc = "{:.6f}".format(v['val_acc'])
-        dirty_test_acc = "{:.6f}".format(v['dirty_test_acc'])
-        if 'dirty_test_f1' in v:
-            dirty_test_f1 = "{:.6f}".format(v['dirty_test_f1'])
-        else:
-            dirty_test_f1 = "nan"
-        if error == 'missing_values' and file == 'dirty':
-            clean_test_acc = "{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}".format(v["clean_impute_mode_mode_test_acc"], 
-                                                                             v["clean_impute_mode_dummy_test_acc"], 
-                                                                             v["clean_impute_median_mode_test_acc"], 
-                                                                             v["clean_impute_median_dummy_test_acc"], 
-                                                                             v["clean_impute_mean_mode_test_acc"], 
-                                                                             v["clean_impute_mean_dummy_test_acc"])
-            if 'dirty_test_f1' in v:
-                clean_test_f1 = "{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}".format(v["clean_impute_mode_mode_test_f1"], 
-                                                                 v["clean_impute_mode_dummy_test_f1"], 
-                                                                 v["clean_impute_median_mode_test_f1"], 
-                                                                 v["clean_impute_median_dummy_test_f1"], 
-                                                                 v["clean_impute_mean_mode_test_f1"], 
-                                                                 v["clean_impute_mean_dummy_test_f1"])
-            else:
-                clean_test_f1 = "nan"
-        elif error == 'outliers' and file == 'dirty':
-            clean_test_acc = "{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}".format(v["clean_iso_forest_impute_median_dummy_test_acc"],
-                                                                             v["clean_IQR_impute_mean_dummy_test_acc"], 
-                                                                             v["clean_iso_forest_delete_test_acc"], 
-                                                                             v["clean_SD_impute_median_dummy_test_acc"],
-                                                                             v["clean_iso_forest_impute_mean_dummy_test_acc"],
-                                                                             v["clean_SD_delete_test_acc"], 
-                                                                             v["clean_IQR_impute_median_dummy_test_acc"],
-                                                                             v["clean_IQR_impute_mean_dummy_test_acc"],
-                                                                             v["clean_IQR_delete_test_acc"])
-            if 'dirty_test_f1' in v:
-                clean_test_f1 = "{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}/{:.6f}".format(v["clean_iso_forest_impute_median_dummy_test_f1"],
-                                                             v["clean_IQR_impute_mean_dummy_test_f1"], 
-                                                             v["clean_iso_forest_delete_test_f1"], 
-                                                             v["clean_SD_impute_median_dummy_test_f1"],
-                                                             v["clean_iso_forest_impute_mean_dummy_test_f1"],
-                                                             v["clean_SD_delete_test_f1"], 
-                                                             v["clean_IQR_impute_median_dummy_test_f1"],
-                                                             v["clean_IQR_impute_mean_dummy_test_f1"],
-                                                             v["clean_IQR_delete_test_f1"])
-            else:
-                clean_test_f1 = "nan"
-        else:
-            clean_test_acc = "{:.6f}".format(v[file + '_test_acc'])
-            if 'dirty_test_f1' in v:
-                clean_test_f1 = "{:.6f}".format(v[file + '_test_f1'])
-            else:
-                clean_test_f1 = "nan"
-
-        value = [train_acc, val_acc, dirty_test_acc, clean_test_acc, dirty_test_f1, clean_test_f1]
-
-        if utils.get_model(model)['type'] == ml_type:
-            result[key] = value
-    seeds = list({seed for dataset, error, file, model, seed in result.keys()})
-
-    combine = {}
+def summarize(result, precision=6):
+    seeds = list({k.split('/')[4] for k in result.keys()})
+    summary = {}
     for s in seeds:
         for k, v in result.items():
-            dataset, error, file, model, seed = k
-            if seed != s:
+            dataset, error, file, model, seed = k.split('/')
+            if s != seed:
                 continue
-            key = (dataset, error, file, model)
-            if key not in combine.keys():
-                combine[key] = v
-            else:
-                for i, acc in enumerate(v):
-                    combine[key][i] += ", {}".format(acc) 
 
-    table_generator = TableGenerator(combine)
-    table_generator.writeToDataframe("{}_result.xlsx".format(ml_type))
+            key = (dataset, error, file, model)
+            test_files = sorted(utils.get_test_files(error, file))[::-1]
+            test_acc_keys = ['{}_test_acc'.format(f) for f in test_files if f[0] == 'c']
+            test_f1_keys = ['{}_test_f1'.format(f) for f in test_files if f[0] == 'c']
+
+            train_acc = get_result(v, 'train_acc')
+            val_acc = get_result(v, 'val_acc')
+            dirty_test_acc = get_result(v, 'dirty_test_acc')
+            dirty_test_f1 = get_result(v, 'dirty_test_f1')
+            clean_test_acc = "/".join([get_result(v, test_k) for test_k in test_acc_keys])
+            clean_test_f1 = "/".join([get_result(v, test_k) for test_k in test_f1_keys])
+
+            value = [train_acc, val_acc, dirty_test_acc, clean_test_acc, dirty_test_f1, clean_test_f1]
+
+            if key not in summary.keys():
+                summary[key] = value
+            else:
+                for i, acc in enumerate(summary[key]):
+                    summary[key][i] += ", {}".format(value[i]) 
+    return summary
+
+result = utils.load_result()
+summary = summarize(result)
+table_generator = TableGenerator(summary)
+table_generator.writeToDataframe("result.xlsx")
 

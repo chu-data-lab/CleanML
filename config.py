@@ -72,10 +72,11 @@ USCensus = {
 
 Restaurant = {
     "data_dir": "Restaurant",
-    "error_types": ['missing_values', 'duplicates','inconsistency'],
+    "error_types": ['duplicates','inconsistency'],
     "label": "priceRange",
     "ml_task": "classification",
-    "text_variables": ["name", "streetAddress", "telephone", "website"],
+    "drop_variables": ["streetAddress", "telephone", "website"],
+    "text_variables": ["name", "categories", "neighborhood"],
     "key_columns": ["telephone"],
     "manual_clean_duplicates": False
 }
@@ -126,7 +127,7 @@ IMDB = {
 }
 
 datasets = [Airbnb, USCensus, Credit, EGG, Titanic, KDD,
-            Marketing, Sensor, Movie, Food]
+            Marketing, Sensor, Movie, Food, Restaurant]
 
 # Citation, Restaurant,Food, Movie
 

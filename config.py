@@ -110,8 +110,8 @@ Movie = {
 
 Food = {
     "data_dir": "Food",
-    "error_types": ['inconsistency'],
-    "categorical_variables": ['Violations'],
+    "error_types": ['missing_values', 'inconsistency'],
+    "categorical_variables": ['Violations', "Results"],
     "label": "Results",
     "ml_task": "classification",
     "drop_variables":[],

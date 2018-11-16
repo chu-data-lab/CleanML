@@ -31,7 +31,7 @@ def load_df(dataset, file_dir):
     if 'categorical_variables' in dataset.keys():
         categories = dataset['categorical_variables']
         for cat in categories:
-            df[cat] = df[cat].astype(str)
+            df[cat] = df[cat].astype(str).replace('nan', np.nan)
     return df
 
 def load_dfs(dataset, file_dir_pfx):

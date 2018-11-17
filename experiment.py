@@ -14,7 +14,8 @@ parser.add_argument('--nosave', default=False, action='store_true')
 args = parser.parse_args()
 
 ## Set up
-dataset_names = ["Food", "Airbnb", "Restaurant"]
+dataset_names = ["Titanic", "EGG", "Credit", "USCensus", "Airbnb", 
+                "Marketing", "Sensor", "Movie", "Food", "Restaurant", "KDD"]
 model_names = [ "linear_regression", "logistic_regression", "decision_tree_regression", 
                 "decision_tree_classification", "adaboost_classification", 
                 "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
@@ -73,7 +74,7 @@ for dataset, error_type, file, model, seed in jobs:
     
     estimator = model["estimator"]
     special = (dataset_name == 'IMDB')
-    normalize = (model_name == 'linear_svm')
+    normalize = True
 
     np.random.seed(seed)
     coarse_param_seed, fine_param_seed, coarse_train_seed, fine_train_seed = np.random.randint(1000, size=4)

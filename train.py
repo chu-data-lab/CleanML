@@ -6,7 +6,7 @@ import utils
 import sys
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 import pickle
-import preprocess
+from preprocess import preprocess
 from sklearn.metrics import f1_score
 from sklearn.feature_selection import SelectKBest, chi2
 
@@ -21,7 +21,7 @@ def load_data(dataset, train_dir, test_dir_list, normalize, down_sample_seed=1):
     y_test_list = [test.loc[:, label] for test in test_list]
 
     X_train, y_train, X_test_list, y_test_list = \
-        preprocess.preprocess(dataset, X_train, y_train, X_test_list, y_test_list, normalize, down_sample_seed)
+        preprocess(dataset, X_train, y_train, X_test_list, y_test_list, normalize, down_sample_seed)
     return X_train, y_train, X_test_list, y_test_list  
 
 def parse_searcher(searcher):

@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import utils
 import re
+from collections import Counter
 
 class TableGenerator(object):
     def __init__(self, results):
@@ -50,16 +51,27 @@ class TableGenerator(object):
             df.to_excel(writer, '%s'%error)
         writer.save()
 
-def get_result(result_dict, key, precision=6):
+def form_all(result_dict, key, precision=6):
     if key in result_dict.keys():
-        s = "{1:.{0}f}".format(precision, result_dict[key])
+        res = result_dict[key]
+        s = ",".join(["{1:.{0}f}".format(precision, r) for r in res])
     else:
         s = "nan"
     return s
 
-def summarize(result, precision=6):
+def form_mean_sd(result_dict, key, precision=6):
+    if key in result_dict.keys():
+        res = result_dict[key]
+        mean = "{1:.{0}f}".format(precision, np.mean(res))
+        sd = "{1:.{0}f}".format(precision, np.std(res))
+        s = "{}±{}".format(mean, sd)
+    else:
+        s = "nan"
+    return s
+# 
+def combine(result):
     seeds = list({k.split('/')[4] for k in result.keys()})
-    summary = {}
+    comb = {}
     for s in seeds:
         for k, v in result.items():
             dataset, error, file, model, seed = k.split('/')
@@ -67,28 +79,40 @@ def summarize(result, precision=6):
                 continue
 
             key = (dataset, error, file, model)
-            test_files = sorted(utils.get_test_files(error, file))[::-1]
-            test_acc_keys = ['{}_test_acc'.format(f) for f in test_files if f[0] == 'c']
-            test_f1_keys = ['{}_test_f1'.format(f) for f in test_files if f[0] == 'c']
+            value = {vk:[vv] for vk, vv in v.items()}
 
-            train_acc = get_result(v, 'train_acc')
-            val_acc = get_result(v, 'val_acc')
-            dirty_test_acc = get_result(v, 'dirty_test_acc')
-            dirty_test_f1 = get_result(v, 'dirty_test_f1')
-            clean_test_acc = "/".join([get_result(v, test_k) for test_k in test_acc_keys])
-            clean_test_f1 = "/".join([get_result(v, test_k) for test_k in test_f1_keys])
-
-            value = [train_acc, val_acc, dirty_test_acc, clean_test_acc, dirty_test_f1, clean_test_f1]
-
-            if key not in summary.keys():
-                summary[key] = value
+            if key not in comb.keys():
+                comb[key] = value
             else:
-                for i, acc in enumerate(summary[key]):
-                    summary[key][i] += ", {}".format(value[i]) 
+                for vk, vv in v.items():
+                    comb[key][vk].append(vv)
+    return comb
+
+def summarize(result, form, precision=6):
+    comb = combine(result)
+    summary = {}
+    for k, v in comb.items():
+        dataset, error, file, model = k
+    
+        test_files = sorted(utils.get_test_files(error, file))[::-1]
+        test_acc_keys = ['{}_test_acc'.format(f) for f in test_files if f[0] == 'c']
+        test_f1_keys = ['{}_test_f1'.format(f) for f in test_files if f[0] == 'c']
+
+        train_acc = form(v, 'train_acc', precision)
+        val_acc = form(v, 'val_acc', precision)
+        dirty_test_acc = form(v, 'dirty_test_acc', precision)
+        dirty_test_f1 = form(v, 'dirty_test_f1', precision)
+        clean_test_acc = "/".join([form(v, test_k) for test_k in test_acc_keys])
+        clean_test_f1 = "/".join([form(v, test_k) for test_k in test_f1_keys])
+
+        value = [train_acc, val_acc, dirty_test_acc, clean_test_acc, dirty_test_f1, clean_test_f1]
+        summary[k] = value
     return summary
 
 result = utils.load_result()
-summary = summarize(result)
+# summary = summarize(result, form_all)
+# table_generator = TableGenerator(summary)
+# table_generator.writeToDataframe("all_result.xlsx")
+summary = summarize(result, form_all)
 table_generator = TableGenerator(summary)
-table_generator.writeToDataframe("result.xlsx")
-
+table_generator.writeToDataframe("all_result.xlsx")

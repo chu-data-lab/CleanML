@@ -39,7 +39,7 @@ def text_embedding(corpus_train, corpus_test_list, y_train):
     x_test_list_raw = [vectorizer.transform(corpus_test) for corpus_test in corpus_test_list]
     feature_names = vectorizer.get_feature_names()
 
-    ch2 = SelectKBest(chi2, k=500)
+    ch2 = SelectKBest(chi2, k=200)
     x_train = ch2.fit_transform(x_train_raw, y_train)
     x_test_list = [ch2.transform(x_test) for x_test in x_test_list_raw]
     

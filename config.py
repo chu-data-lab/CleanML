@@ -113,6 +113,7 @@ Food = {
     "data_dir": "Food",
     "error_types": ['missing_values', 'inconsistency'],
     "categorical_variables": ['Violations', "Results"],
+    "drop_variables": ["Inspection Date"],
     "label": "Results",
     "ml_task": "classification",
     "drop_variables":[],

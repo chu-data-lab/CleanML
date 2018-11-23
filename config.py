@@ -111,7 +111,7 @@ Movie = {
 
 Food = {
     "data_dir": "Food",
-    "error_types": ['missing_values', 'inconsistency'],
+    "error_types": ['inconsistency'],
     "categorical_variables": ['Violations', "Results"],
     "drop_variables": ["Inspection Date"],
     "label": "Results",

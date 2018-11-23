@@ -37,6 +37,10 @@ def clean_mv(dataset):
         clean_dir_pfx = os.path.join(save_dir, 'clean_{}'.format(cleaner.tag))
         if cleaner.method == "delete":
             clean_dir_pfx = os.path.join(save_dir, 'dirty')
+        else:
+            impute = cleaner.impute
+            impute_dir = os.path.join(save_dir, '{}.csv'.format(cleaner.tag))
+            impute.to_csv(impute_dir)
 
         utils.save_dfs(clean_train, clean_test, clean_dir_pfx)
         print('{} finished.'.format(cleaner.tag))

@@ -13,12 +13,12 @@ KDD = {
 
 Citation = {
     "data_dir": "Citation",
-    "error_types": ['missing_values', 'duplicates', 'inconsistency'],
-    "label":"venue",
+    "error_types": ['duplicates'],
+    'key_columns': ['titleWOS', 'yearWOS'],
+    "label":"CS",
     "ml_task": "classification",
-    "text_variables":["title", "authors"],
-    "drop_variables":["id"],
-    "manual_clean_duplicates": True
+    "text_variables":["titleWOS", "venueWOS", "keywords", "abstract"],
+    "manual_clean_duplicates": False
 }
 
 Marketing = {
@@ -41,8 +41,8 @@ Airbnb = {
 DfD = {
     "data_dir": "DfD",
     "error_types": ['inconsistency'],
-    "categorical_variables":[],
-    "label": "Donate",
+    "text_variables":["Name1"],
+    "label": "Donation",
     "ml_task": "classification"
 }
 
@@ -128,7 +128,7 @@ IMDB = {
 }
 
 datasets = [Airbnb, USCensus, Credit, EGG, Titanic, KDD,
-            Marketing, Sensor, Movie, Food, Restaurant]
+            Marketing, Sensor, Movie, Food, Restaurant, DfD]
 
 # Citation, Restaurant,Food, Movie
 

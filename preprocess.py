@@ -5,6 +5,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 import numpy as np
 import pandas as pd
+import sys
 
 def drop_variables(X_train, X_test_list, drop_columns):
     n_test_files = len(X_test_list)
@@ -16,8 +17,8 @@ def down_sample(X, y, random_state):
     rus = RandomUnderSampler(random_state=random_state)
     X_rus, y_rus = rus.fit_sample(X, y)
     indices = rus.sample_indices_
-    X_train = X.iloc[indices, :]
-    y_train = y.iloc[indices]
+    X_train = X.iloc[indices, :].reset_index(drop=True)
+    y_train = y.iloc[indices].reset_index(drop=True)
     return X_train, y_train
 
 def encode_cat_label(y_train, y_test_list):
@@ -39,10 +40,10 @@ def text_embedding(corpus_train, corpus_test_list, y_train):
     x_test_list_raw = [vectorizer.transform(corpus_test) for corpus_test in corpus_test_list]
     feature_names = vectorizer.get_feature_names()
 
-    ch2 = SelectKBest(chi2, k=200)
+    k = min(200, x_train_raw.shape[1])
+    ch2 = SelectKBest(chi2, k=k)
     x_train = ch2.fit_transform(x_train_raw, y_train)
     x_test_list = [ch2.transform(x_test) for x_test in x_test_list_raw]
-    
     feature_names = [feature_names[i] for i in ch2.get_support(indices=True)]
     x_train = pd.DataFrame(x_train.toarray(), columns=feature_names)
     x_test_list = [pd.DataFrame(x_test.toarray(), columns=feature_names) for x_test in x_test_list]
@@ -91,6 +92,7 @@ def preprocess(dataset, X_train, y_train, X_test_list, y_test_list, normalize, d
     if "text_variables" in dataset.keys():
         text_columns = dataset["text_variables"]
         X_train, X_test_list = encode_text_features(X_train, X_test_list, y_train, text_columns)
+
 
     X_train, X_test_list = encode_cat_features(X_train, X_test_list)
     

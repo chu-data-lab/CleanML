@@ -43,7 +43,8 @@ DfD = {
     "error_types": ['inconsistency'],
     "text_variables":["Name1"],
     "label": "Donation",
-    "ml_task": "classification"
+    "ml_task": "classification",
+    "class_imbalance": True
 }
 
 Titanic = {

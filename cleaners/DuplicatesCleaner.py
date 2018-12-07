@@ -8,6 +8,7 @@ class DuplicatesCleaner(object):
     def detect(self, df, keys):
         key_col = pd.DataFrame(df, columns=keys)
         is_dup = key_col.duplicated(keep='first')
+        is_dup = pd.DataFrame(is_dup, columns=['is_dup'])
         return is_dup
 
     def repair(self, df, is_dup):

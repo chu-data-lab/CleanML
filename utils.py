@@ -147,3 +147,103 @@ def get_filenames(error_type):
         filenames = ["dirty", "clean"]
     return filenames
 
+def dict_to_df(dic, row_keys_idx, col_keys_idx):
+    """ Convert dict to data frame
+        
+        Args:
+            dic: result dictionary. Keys are tuples.
+            row_keys_idx: index of keys for rows, ordered hierarchicallly
+            col_keys_idx: index of keys for columns, ordered hierarchicallly
+    """
+    col_keys = sorted(set([tuple([k[i] for i in col_keys_idx]) for k in dic.keys()]))[::-1]
+    row_keys = sorted(set([tuple([k[i] for i in row_keys_idx]) for k in dic.keys()]))[::-1]
+    sheet_idx = [i for i in np.arange(len(list(dic.keys())[0])) if i not in row_keys_idx and i not in col_keys_idx]
+    sheet_keys = sorted(set([tuple([k[i] for i in sheet_idx]) for k in dic.keys()]))
+
+    if len(sheet_keys) > 1:
+        print("sheet key not the same in the same sheet")
+        sys.exit()
+    else:
+        sheet_key = sheet_keys[0]
+
+    order = col_keys_idx + row_keys_idx + sheet_idx
+
+    index = pd.MultiIndex.from_tuples(row_keys)
+    columns = pd.MultiIndex.from_tuples(col_keys)
+    data = []
+
+    for r in row_keys:
+        row = []
+        for c in col_keys:
+            disorder_key = c + r + sheet_key
+            key = tuple([d for o, d in sorted(zip(order, disorder_key))])
+            
+            if key in dic.keys():
+                row.append(dic[key])
+            else:
+                row.append(np.nan)
+        data.append(row)
+    df = pd.DataFrame(data, index=index, columns=columns)
+    return df
+
+def dict_to_dfs(dic, row_keys_idx, col_keys_idx, df_idx):
+    """ Convert dict to dataframes
+    
+    Args:
+        dic: result dictionary. Keys are tuples.
+        row_keys_idx: index of keys for rows, ordered hierarchicallly
+        col_keys_idx: index of keys for columns, ordered hierarchicallly
+    """
+    dfs = {}
+    df_keys = sorted(set([k[df_idx] for k in dic.keys()]))
+    for k in df_keys:
+        filtered_dic = {key:value for key, value in dic.items() if key[df_idx] == k}           
+        df = dict_to_df(filtered_dic, row_keys_idx, col_keys_idx)
+        dfs[k] = df
+    return dfs
+
+def dict_to_xls(dic, row_keys_idx, col_keys_idx, sheet_idx, save_dir):
+    """ Convert dict to excel
+    
+    Args:
+        dic: result dictionary. Keys are tuples.
+        row_keys_idx: index of keys for rows, ordered hierarchicallly
+        col_keys_idx: index of keys for columns, ordered hierarchicallly
+    """
+    writer = pd.ExcelWriter(save_dir)
+
+    if sheet_idx is None:
+        df = dict_to_df(dic, row_keys_idx, col_keys_idx)
+        df.to_excel(writer)
+    else:
+        dfs = dict_to_dfs(dic, row_keys_idx, col_keys_idx, sheet_idx)
+        for k, df in dfs.items():
+            df.to_excel(writer, '%s'%k)            
+    writer.save()
+
+def combine(result):
+    # Combine result from different experiments into a list
+    seeds = list({k.split('/')[4] for k in result.keys()})
+    comb = {}
+    for s in seeds:
+        for k, v in result.items():
+            dataset, error, file, model, seed = k.split('/')
+            if s != seed:
+                continue
+
+            key = (dataset, error, file, model)
+            value = {vk:[vv] for vk, vv in v.items()}
+
+            if key not in comb.keys():
+                comb[key] = value
+            else:
+                for vk, vv in v.items():
+                    comb[key][vk].append(vv)
+    return comb
+
+def replace_result(result1_dir, result2_dir, dataset_name):
+    result1 = json.load(open(result1_dir, 'r'))
+    result2 = json.load(open(result2_dir, 'r'))
+    rep = {k:v for k, v in result2.items() if dataset_name == k.split('/')[0]}
+    result = {**result1, **rep}
+    json.dump(result, open('./result.json', 'w'))

@@ -9,7 +9,8 @@ from collections import Counter
 
 def get_indicator_dirs(dataset, error_type):
     save_dir = utils.get_dir(dataset, error_type)
-    regex = re.compile(r'indicator.*train')
+    # regex = re.compile(r'indicator.*train')
+    regex = re.compile(r'indicator.*')
     if os.path.exists(save_dir):
         filenames = filter(regex.search, os.listdir(save_dir))
         indicator_dirs = [utils.get_dir(dataset, error_type, file) for file in filenames]

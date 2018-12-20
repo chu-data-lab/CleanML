@@ -1,3 +1,5 @@
+"""Preprocess data"""
+
 from sklearn.preprocessing import LabelEncoder
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.preprocessing import StandardScaler
@@ -8,6 +10,7 @@ import pandas as pd
 import sys
 
 def drop_variables(X_train, X_test_list, drop_columns):
+    """drop irrelavant features"""
     n_test_files = len(X_test_list)
     X_train.drop(columns=drop_columns, inplace=True)
     for i in range(n_test_files):
@@ -79,6 +82,17 @@ def encode_cat_features(X_train, X_test_list):
     return X_train, X_test_list
 
 def preprocess(dataset, X_train, y_train, X_test_list, y_test_list, normalize, down_sample_seed=1):
+    """ Preprocess data
+        
+        Args:
+            dataset (dict): dataset dict in config
+            X_train (pd.DataFrame): features (train)
+            y_train (pd.DataFrame): label (train)
+            X_test_list (list): list of features (test)
+            y_test_list (list): list of label (test)
+            normalize (bool): whehter to standarize the data
+            down_sample_seed: seed for down sampling
+    """
     if "drop_variables" in dataset.keys():
         drop_columns = dataset['drop_variables']
         drop_variables(X_train, X_test_list, drop_columns)
@@ -92,7 +106,6 @@ def preprocess(dataset, X_train, y_train, X_test_list, y_test_list, normalize, d
     if "text_variables" in dataset.keys():
         text_columns = dataset["text_variables"]
         X_train, X_test_list = encode_text_features(X_train, X_test_list, y_train, text_columns)
-
 
     X_train, X_test_list = encode_cat_features(X_train, X_test_list)
     

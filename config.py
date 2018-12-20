@@ -1,7 +1,10 @@
-# Datasets
+"""Configuration"""
+
+# directory
 root_dir = 'datasets'
 result_dir = 'result.json'
 
+# datasets
 KDD = {
     "data_dir": "KDD",
     "error_types": ['missing_values', 'outliers'],
@@ -18,7 +21,6 @@ Citation = {
     "label":"CS",
     "ml_task": "classification",
     "text_variables":["titleWOS", "venueWOS", "keywords", "abstract"],
-    "manual_clean_duplicates": False
 }
 
 Marketing = {
@@ -35,7 +37,6 @@ Airbnb = {
     "categorical_variables": ['Rating'],
     "ml_task": "classification",
     'key_columns': ['latitude', 'longitude'],
-    "manual_clean_duplicates": False
 }
 
 DfD = {
@@ -78,8 +79,7 @@ Restaurant = {
     "ml_task": "classification",
     "drop_variables": ["streetAddress", "telephone", "website"],
     "text_variables": ["name", "categories", "neighborhood"],
-    "key_columns": ["telephone"],
-    "manual_clean_duplicates": False
+    "key_columns": ["telephone"]
 }
 
 Credit = {
@@ -106,8 +106,7 @@ Movie = {
     "categorical_variables": ["genres"],
     "text_variables": ["title"],
     "label": "genres",
-    "ml_task": "classification",
-    "manual_clean_duplicates": False
+    "ml_task": "classification"
 }
 
 Food = {
@@ -130,6 +129,3 @@ IMDB = {
 
 datasets = [Airbnb, USCensus, Credit, EGG, Titanic, KDD,
             Marketing, Sensor, Movie, Food, Restaurant, DfD]
-
-# Citation, Restaurant,Food, Movie
-

@@ -1,138 +1,171 @@
-from cleaners.MVCleaner import MVCleaner
-from cleaners.OutlierCleaner import OutlierCleaner
-from cleaners.DuplicatesCleaner import DuplicatesCleaner
-from cleaners.InconsistencyCleaner import InconsistencyCleaner
+"""Clean datasets"""
+
+from cleaners import *
 import pandas as pd
 import config
 import os
 import argparse
-import sys
-import matplotlib.pyplot as plt
 import utils
-import pickle
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mv', default=False, action='store_true')
 parser.add_argument('--out', default=False, action='store_true')
 parser.add_argument('--dup', default=False, action='store_true')
 parser.add_argument('--incon', default=False, action='store_true')
-parser.add_argument('--summary', default=False, action='store_true')
 parser.add_argument('--dataset', default=None)
+args = parser.parse_args()
 
 def clean_mv(dataset):
-    file_dir_pfx = utils.get_dir(dataset, 'raw', 'dirty')
-    save_dir = utils.get_dir(dataset, 'missing_values', create_folder=True)
-    dirty_train, dirty_test = utils.load_dfs(dataset, file_dir_pfx)
+    """clean missing values"""
 
+    # create saving folder
+    save_dir = utils.get_dir(dataset, 'missing_values', create_folder=True)
+
+    # load dirty data
+    dirty_path_pfx = utils.get_dir(dataset, 'raw', 'dirty')
+    dirty_train, dirty_test = utils.load_dfs(dataset, dirty_path_pfx)
+
+    # get cleaners with different cleaning methods
     num_methods = ['mean', 'median', 'mode']
     cat_methods = ['mode', 'dummy']
     cleaners = [MVCleaner(method='impute', num=num, cat=cat) for num in num_methods for cat in cat_methods]
     cleaners.append(MVCleaner(method="delete"))
 
     for cleaner in cleaners:
+        # fit on dirty train and clean both train and test
         cleaner.fit(dirty_train)
         clean_train, ind_train = cleaner.clean(dirty_train)
         clean_test, ind_test = cleaner.clean(dirty_test)
 
-        clean_dir_pfx = os.path.join(save_dir, 'clean_{}'.format(cleaner.tag))
+        # save clean train and test data
+        clean_path_pfx = os.path.join(save_dir, 'clean_{}'.format(cleaner.tag))
         if cleaner.method == "delete":
-            clean_dir_pfx = os.path.join(save_dir, 'dirty')
-        else:
+            clean_path_pfx = os.path.join(save_dir, 'dirty') # name delete mv as dirty
+        utils.save_dfs(clean_train, clean_test, clean_path_pfx)
+        print('{} finished.'.format(cleaner.tag))
+
+        # save imputaion values
+        if cleaner.method != "delete":
             impute = cleaner.impute
             impute_dir = os.path.join(save_dir, '{}.csv'.format(cleaner.tag))
             impute.to_csv(impute_dir)
 
-        utils.save_dfs(clean_train, clean_test, clean_dir_pfx)
-        print('{} finished.'.format(cleaner.tag))
-
-    ind_dir_pfx = os.path.join(save_dir, 'indicator')
-    utils.save_dfs(ind_train, ind_test, ind_dir_pfx)
+    # save indicator
+    ind_path_pfx = os.path.join(save_dir, 'indicator')
+    utils.save_dfs(ind_train, ind_test, ind_path_pfx)
 
 def clean_outliers(dataset):
-    if 'missing_values' in dataset['error_types']:
-        file_dir_pfx = utils.get_dir(dataset, 'missing_values', 'dirty')
-    else:
-        file_dir_pfx = utils.get_dir(dataset, 'raw', 'dirty')
-    save_dir = utils.get_dir(dataset, 'outliers', create_folder=True)
-    dirty_train, dirty_test = utils.load_dfs(dataset, file_dir_pfx)
+    """clean outliers"""
 
+    # create saving folder
+    save_dir = utils.get_dir(dataset, 'outliers', create_folder=True)
+
+    # load dirty data 
+    if 'missing_values' in dataset['error_types']:
+        # if raw dataset has missing values, use dataset with mv deleted in missing value folder 
+        dirty_path_pfx = utils.get_dir(dataset, 'missing_values', 'dirty')
+    else:
+        dirty_path_pfx = utils.get_dir(dataset, 'raw', 'dirty')
+    dirty_train, dirty_test = utils.load_dfs(dataset, dirth_path_pfx)
+
+    # save dirty data
+    dirty_path_pfx = os.path.join(save_dir, 'dirty')
+    utils.save_dfs(dirty_train, dirty_test, dirty_path_pfx)
+
+    # get cleaners with different detect and repair methods
     detect_methods = ["SD", "IQR", "iso_forest"]
     num_methods = ['mean', 'median', 'mode']
     cat_methods = ['dummy']
     repairers = [MVCleaner(method='impute', num=num, cat=cat) for num in num_methods for cat in cat_methods]
     repairers.append(MVCleaner(method="delete"))
+    cleaners = [OutlierCleaner(detect=detect, repairer=repairer) for detect in detect_methods for repairer in repairers]
 
-    for detect in detect_methods:
-        for repairer in repairers:
-            cleaner = OutlierCleaner(detect=detect, repairer=repairer)
-            cleaner.fit(dirty_train)
-            clean_train, ind_train = cleaner.clean(dirty_train, verbose=True)
-            clean_test, ind_test = cleaner.clean(dirty_test, verbose=True, ignore=dataset['label'])
+    for cleaner in cleaners:
+        # fit on dirty train and clean both train and test
+        cleaner.fit(dirty_train)
+        clean_train, ind_train = cleaner.clean(dirty_train, verbose=True)
+        clean_test, ind_test = cleaner.clean(dirty_test, verbose=True, ignore=dataset['label']) # don't clean label outliers in test set
 
-            clean_dir_pfx = os.path.join(save_dir, 'clean_{}'.format(cleaner.tag))
-            utils.save_dfs(clean_train, clean_test, clean_dir_pfx)
-            ind_dir_pfx = os.path.join(save_dir, 'indicator_{}'.format(detect))
-            utils.save_dfs(ind_train, ind_test, ind_dir_pfx)
-            print('{} finished.'.format(cleaner.tag))
+        # save clean data
+        clean_path_pfx = os.path.join(save_dir, 'clean_{}'.format(cleaner.tag))
+        utils.save_dfs(clean_train, clean_test, clean_path_pfx)
 
+        # save indicator
+        ind_path_pfx = os.path.join(save_dir, 'indicator_{}'.format(detect))
+        utils.save_dfs(ind_train, ind_test, ind_path_pfx)
+        print('{} finished.'.format(cleaner.tag))
+
+def clean_duplicates(dataset):
+    """clean duplicates"""
+
+    # create saving folder
+    save_dir = utils.get_dir(dataset, 'duplicates', create_folder=True)
+
+    # load dirty data
+    if 'inconsistency' in dataset['error_types']:
+        # if dataset has inconsistencies, use clean data in inconsistency folder
+        dirty_path_pfx = utils.get_dir(dataset, "inconsistency", 'clean') 
+    elif 'missing_values' in dataset['error_types']:
+        # if dataset has missing values, use dataset with mv deleted in missing value folder 
+        dirty_path_pfx = utils.get_dir(dataset, "missing_values", 'dirty')
+    else:
+        dirty_path_pfx = utils.get_dir(dataset, 'raw', 'dirty')
+    dirty_train, dirty_test = utils.load_dfs(dataset, dirty_path_pfx)
+
+    # save dirty data
     dirty_dir_pfx = os.path.join(save_dir, 'dirty')
     utils.save_dfs(dirty_train, dirty_test, dirty_dir_pfx)
 
-def clean_duplicates(dataset):
-    if 'inconsistency' in dataset['error_types']:
-        file_dir_pfx = utils.get_dir(dataset, "inconsistency", 'clean')
-    elif 'missing_values' in dataset['error_types']:
-        file_dir_pfx = utils.get_dir(dataset, "missing_values", 'dirty')
-    else:
-        file_dir_pfx = utils.get_dir(dataset, 'raw', 'dirty')
-
-    save_dir = utils.get_dir(dataset, 'duplicates', create_folder=True)
-    dirty_train, dirty_test = utils.load_dfs(dataset, file_dir_pfx)
-
+    # get cleaners
     cleaner = DuplicatesCleaner()
+
+    # clean train and test seperately
     clean_train, ind_train = cleaner.clean(dirty_train, dataset['key_columns'])
     clean_test, ind_test = cleaner.clean(dirty_test, dataset['key_columns'])
 
-    clean_dir_pfx = os.path.join(save_dir, 'clean')
-    utils.save_dfs(clean_train, clean_test, clean_dir_pfx)
-    ind_dir_pfx = os.path.join(save_dir, 'indicator')
-    utils.save_dfs(ind_train, ind_test, ind_dir_pfx)
-    dirty_dir_pfx = os.path.join(save_dir, 'dirty')
-    utils.save_dfs(dirty_train, dirty_test, dirty_dir_pfx)
+    # save clean data
+    clean_path_pfx = os.path.join(save_dir, 'clean')
+    utils.save_dfs(clean_train, clean_test, clean_path_pfx)
+
+    # save indicator
+    ind_path_pfx = os.path.join(save_dir, 'indicator')
+    utils.save_dfs(ind_train, ind_test, ind_path_pfx)
+
     print('Finished')
 
 def clean_inconsistency(dataset):
-    dirty_dir_pfx = utils.get_dir(dataset, "inconsistency", 'dirty')
-    dirty_train, dirty_test = utils.load_dfs(dataset, dirty_dir_pfx)
+    """clean inconsistencies"""
+    # only clean test, must clean train manually before clean test
+
+    # load dirty train, clean train, dirty test
+    dirty_path_pfx = utils.get_dir(dataset, "inconsistency", 'dirty')
+    dirty_train, dirty_test = utils.load_dfs(dataset, dirty_path_pfx)
     clean_train_dir = utils.get_dir(dataset, "inconsistency", 'clean_train.csv')
     clean_train = utils.load_df(dataset, clean_train_dir)
 
+    # get cleaner
     cleaner = InconsistencyCleaner()
+
+    # clean dirty test
     cleaner.fit(dirty_train, clean_train)
     clean_train, ind_train = cleaner.clean(dirty_train)
     clean_test, ind_test = cleaner.clean(dirty_test)
 
-    clean_dir_pfx = utils.get_dir(dataset, "inconsistency", 'clean')
-    ind_dir_pfx = utils.get_dir(dataset, "inconsistency", 'indicator')
-    utils.save_dfs(clean_train, clean_test, clean_dir_pfx)
-    utils.save_dfs(ind_train, ind_test, ind_dir_pfx)
+    # save clean test
+    clean_path_pfx = utils.get_dir(dataset, "inconsistency", 'clean')
+    utils.save_dfs(clean_train, clean_test, clean_path_pfx)
+
+    # save indicaotr
+    ind_path_pfx = utils.get_dir(dataset, "inconsistency", 'indicator')
+    utils.save_dfs(ind_train, ind_test, ind_path_pfx)
     print('Finished')
 
 if __name__ == '__main__':
-    root_dir = config.root_dir
-    datasets = config.datasets
-    args = parser.parse_args()
-    names = [dt['data_dir'] for dt in datasets]
+    # datasets to be cleaned, clean all datasets if not specified
+    datasets = [utils.get_dataset(args.dataset)] if args.dataset is not None else config.datasets
 
-    if args.dataset is None:
-        selected_datasets = datasets
-    else:
-        if args.dataset not in names:
-            print('Dataset does not exist.')
-            sys.exit(1)
-        selected_datasets = [utils.get_dataset(args.dataset)]
-
-    for dataset in selected_datasets:
+    # clean datasets
+    for dataset in datasets:
         if args.mv and 'missing_values' in dataset['error_types']:
             print("Cleaning missing values for {}.".format(dataset['data_dir']))
             clean_mv(dataset)

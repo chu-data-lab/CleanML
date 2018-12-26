@@ -16,7 +16,10 @@ parser.add_argument('--dataset', default=None)
 args = parser.parse_args()
 
 def clean_mv(dataset):
-    """clean missing values"""
+    """ Clean missing values
+        Args:
+            dataset (dict): dataset dict in config
+    """
 
     # create saving folder
     save_dir = utils.get_dir(dataset, 'missing_values', create_folder=True)
@@ -55,7 +58,10 @@ def clean_mv(dataset):
     utils.save_dfs(ind_train, ind_test, ind_path_pfx)
 
 def clean_outliers(dataset):
-    """clean outliers"""
+    """ Clean outliers
+        Args:
+            dataset (dict): dataset dict in config
+    """
 
     # create saving folder
     save_dir = utils.get_dir(dataset, 'outliers', create_folder=True)
@@ -66,7 +72,7 @@ def clean_outliers(dataset):
         dirty_path_pfx = utils.get_dir(dataset, 'missing_values', 'dirty')
     else:
         dirty_path_pfx = utils.get_dir(dataset, 'raw', 'dirty')
-    dirty_train, dirty_test = utils.load_dfs(dataset, dirth_path_pfx)
+    dirty_train, dirty_test = utils.load_dfs(dataset, dirty_path_pfx)
 
     # save dirty data
     dirty_path_pfx = os.path.join(save_dir, 'dirty')
@@ -96,7 +102,10 @@ def clean_outliers(dataset):
         print('{} finished.'.format(cleaner.tag))
 
 def clean_duplicates(dataset):
-    """clean duplicates"""
+    """ Clean duplicates
+        Args:
+            dataset (dict): dataset dict in config
+    """
 
     # create saving folder
     save_dir = utils.get_dir(dataset, 'duplicates', create_folder=True)
@@ -113,8 +122,8 @@ def clean_duplicates(dataset):
     dirty_train, dirty_test = utils.load_dfs(dataset, dirty_path_pfx)
 
     # save dirty data
-    dirty_dir_pfx = os.path.join(save_dir, 'dirty')
-    utils.save_dfs(dirty_train, dirty_test, dirty_dir_pfx)
+    dirty_path_pfx = os.path.join(save_dir, 'dirty')
+    utils.save_dfs(dirty_train, dirty_test, dirty_path_pfx)
 
     # get cleaners
     cleaner = DuplicatesCleaner()
@@ -134,7 +143,10 @@ def clean_duplicates(dataset):
     print('Finished')
 
 def clean_inconsistency(dataset):
-    """clean inconsistencies"""
+    """ Clean inconsistencies
+        Args:
+            dataset (dict): dataset dict in config
+    """
     # only clean test, must clean train manually before clean test
 
     # load dirty train, clean train, dirty test

@@ -20,7 +20,7 @@ model_names = [ "linear_regression", "logistic_regression", "decision_tree_regre
                 "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
                 "random_forest_regression", "guassian_naive_bayes"]
 
-dataset_names = ['Credit']
+dataset_names = ['KDD']
 model_names = ["guassian_naive_bayes"]
 
 ## save logging info

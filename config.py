@@ -7,7 +7,7 @@ result_dir = 'result.json'
 # datasets
 KDD = {
     "data_dir": "KDD",
-    "error_types": ['missing_values', 'outliers'],
+    "error_types": ['missing_values', 'outliers', 'mislabel'],
     "label": 'is_exciting_20',
     "ml_task": "classification",
     "class_imbalance": True,
@@ -59,7 +59,7 @@ Titanic = {
 
 EGG = {
     "data_dir": "EGG",
-    "error_types": ['outliers'],
+    "error_types": ['outliers', 'mislabel'],
     'label':'Eye',
     "categorical_variables":['Eye'],
     "ml_task": "classification"
@@ -67,7 +67,7 @@ EGG = {
 
 USCensus = {
     "data_dir": "USCensus",
-    "error_types": ['missing_values'],
+    "error_types": ['missing_values', 'mislabel'],
     "label": 'Income',
     "ml_task": "classification"
 }

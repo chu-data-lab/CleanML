@@ -106,6 +106,13 @@ def get_model(model_name):
 
 def get_test_files(error_type, train_file):
     file_type = train_file[0:5]
+
+    if error_type == "mislabel":
+        if file_type == "clean":
+            return get_filenames(error_type)
+        else:
+            return ["clean", train_file]
+    
     if file_type == "clean":
         return ["dirty", train_file]
     else:
@@ -143,6 +150,11 @@ def get_filenames(error_type):
                      "clean_SD_impute_median_dummy",
                      "clean_IQR_impute_median_dummy", 
                      "clean_iso_forest_impute_median_dummy"]
+    elif error_type == 'mislabel':
+        filenames = ["dirty_uniform", 
+                     "dirty_major",
+                     "dirty_minor",
+                     "clean"]
     else:
         filenames = ["dirty", "clean"]
     return filenames

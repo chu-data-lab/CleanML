@@ -7,8 +7,6 @@ from table import *
 import sys
 import os
 
-
-
 def save_fig(save_dir):
     directory = os.path.dirname(save_dir)
     if not os.path.exists(directory):

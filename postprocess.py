@@ -96,14 +96,15 @@ def postprocess_out(dataset):
     label = load_label(dataset, file_dir)
 
     result = {}
-    for m, ind_train in zip(method, ind_trains):
-        res = {}
-        res['ch_value'], res['p_value'] = compute_chi2(ind_train, label)
+    for m, ind_train in zip(method, ind_tests):
+        # res = {}
+        # res['ch_value'], res['p_value'] = compute_chi2(ind_train, label)
 
-        # Class dist
-        dist = class_dist(ind_train, label)
-        res['class_dist'] = '/'.join([str(d) for d in dist])
-        result[m] = res
+        # # Class dist
+        # dist = class_dist(ind_train, label)
+        # res['class_dist'] = '/'.join([str(d) for d in dist])
+        # result[m] = res
+
     return result
 
 def postprocess_dup(dataset):
@@ -143,24 +144,24 @@ chi_dup = []
 chi_incon = []
 
 for dataset in datasets:
-    if 'missing_values' in dataset['error_types']:
-        result = postprocess_mv(dataset)
-        chi_mv.append([dataset['data_dir'], result['ch_value'], result['p_value'], result['class_dist']])
+    # if 'missing_values' in dataset['error_types']:
+    #     result = postprocess_mv(dataset)
+    #     chi_mv.append([dataset['data_dir'], result['ch_value'], result['p_value'], result['class_dist']])
 
     if 'outliers' in dataset['error_types']:
         result = postprocess_out(dataset)
-        res_list = [dataset['data_dir']]
-        for m in ["IQR", "SD", "iso_forest"]:
-            res_list +=  [result[m]['ch_value'], result[m]['p_value'], result[m]['class_dist']]
-        chi_out.append(res_list)
+        # res_list = [dataset['data_dir']]
+        # for m in ["IQR", "SD", "iso_forest"]:
+        #     res_list +=  [result[m]['ch_value'], result[m]['p_value'], result[m]['class_dist']]
+        # chi_out.append(res_list)
 
-    if 'duplicates' in dataset['error_types']:
-        result = postprocess_dup(dataset)
-        chi_dup.append([dataset['data_dir'], result['ch_value'], result['p_value'], result['class_dist']])
+    # if 'duplicates' in dataset['error_types']:
+    #     result = postprocess_dup(dataset)
+    #     chi_dup.append([dataset['data_dir'], result['ch_value'], result['p_value'], result['class_dist']])
 
-    if 'inconsistency' in dataset['error_types']:
-        result = postprocess_incon(dataset)
-        chi_incon.append([dataset['data_dir'], result['ch_value'], result['p_value'], result['class_dist']]) 
+    # if 'inconsistency' in dataset['error_types']:
+    #     result = postprocess_incon(dataset)
+    #     chi_incon.append([dataset['data_dir'], result['ch_value'], result['p_value'], result['class_dist']]) 
 
 
 

@@ -36,6 +36,13 @@ def get_metric(dataset_name, test_file):
         metric = test_file + "_test_acc"
     return metric
 
+def get_ylabel(dataset, error_type):
+    if error_type == 'missing_values':
+        ylabel = "F1 Change Rate" if is_metric_f1(dataset) else "Accuracy Change Rate"
+    else:
+        ylabel = "F1 Change Rate" if is_metric_f1(dataset) else "Accuracy Change Rate"
+    return ylabel
+
 def bar_plot(data, xtic_labels, bar_names, xlabel, ylabel):
     n_bars, n_tics = data.shape
     x = list(range(n_tics))
@@ -60,8 +67,8 @@ def bar_plot(data, xtic_labels, bar_names, xlabel, ylabel):
     ax = plt.gca()
     vals = ax.get_yticks()
     ax.set_yticklabels(['{:,.2%}'.format(x) for x in vals])
-    if n_bars > 1:
-        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    # if n_bars > 1:
+    #     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
 def reindex_df(df, index_order, columns_order):
     df = df.reindex(index_order, axis=0)
@@ -103,11 +110,8 @@ def plot_column(result, index_order, columns_order, xtic_labels, bar_names, colu
         save_dir = "./plot/{}/{}_test/{}_{}_test.png".format(error_types[0], column_name, dataset, column_name)
         
         plt.figure()
-        if error_types[0] == 'missing_values':
-            ylabel = "Change of F1 After Imputing Training Set" if is_metric_f1(dataset) else "Change of Accuracy After Imputing Training set"
-        else:
-            ylabel = "Change of F1 After Cleaning Training Set" if is_metric_f1(dataset) else "Change of Accuracy After Cleaning Training set"
-        bar_plot(data.values, xtic_labels, bar_names, "ML models", ylabel)
+        ylabel = get_ylabel(dataset, error_types[0])
+        bar_plot(data.values, xtic_labels, bar_names, "Classification Models", ylabel)
         save_fig(save_dir)
 
     save_dir = "./plot/{}/{}_test.xls".format(error_types[0], column_name)
@@ -132,11 +136,8 @@ def plot_row(result, index_order, columns_order, xtic_labels, bar_names, row_nam
         save_dir = "./plot/{}/{}_model/{}_{}_model.png".format(error_types[0], row_name, dataset, row_name)
         
         plt.figure()
-        if error_types[0] == 'missing_values':
-            ylabel = "Change of F1 After Imputing Test set" if is_metric_f1(dataset) else "Change of Accuracy After Imputing Test set"
-        else:
-            ylabel = "Change of F1 After Cleaning Test Set" if is_metric_f1(dataset) else "Change of Accuracy After Cleaning Test Set"
-        bar_plot(data.values, xtic_labels, bar_names, "ML models", ylabel)
+        ylabel = get_ylabel(dataset, error_types[0])
+        bar_plot(data.values, xtic_labels, bar_names, "Classification Models", ylabel)
         save_fig(save_dir)
 
     save_dir = "./plot/{}/{}_model.xls".format(error_types[0], row_name)
@@ -165,12 +166,8 @@ def plot_multirow_dirty(result, index_order, columns_order, xtic_labels, bar_nam
         save_dir = "./plot/{}/dirty_model/{}_dirty_model.png".format(error_types[0], dataset)
         
         plt.figure()
-        if error_types[0] == 'missing_values':
-            ylabel = "Change of F1 After Imputing Test Set" if is_metric_f1(dataset) else "Change of Accuracy After Imputing Test Set"
-        else:
-            ylabel = "Change of F1 After Cleaning Test set" if is_metric_f1(dataset) else "Change of Accuracy After Cleaning Test Set"
-        
-        bar_plot(data.values, xtic_labels, bar_names, "ML models", ylabel)
+        ylabel = get_ylabel(dataset, error_types[0])
+        bar_plot(data.values, xtic_labels, bar_names, "Classification Models", ylabel)
         save_fig(save_dir)
 
     save_dir = "./plot/{}/dirty_model.xls".format(error_types[0])
@@ -205,11 +202,8 @@ def plot_multirow_clean(result, index_order, columns_order, xtic_labels, bar_nam
         data = reindex_df(data, index_order, columns_order)
         save_dir = "./plot/{}/clean_model/{}_clean_model.png".format(error_types[0], dataset)
         plt.figure()
-        if error_types[0] == 'missing_values':
-            ylabel = "Change of F1 After Imputing Test Set" if is_metric_f1(dataset) else "Change of Accuracy After Imputing Test Set"
-        else:
-            ylabel = "Change of F1 After Cleaning Test set" if is_metric_f1(dataset) else "Change of Accuracy After Cleaning Test Set"
-        bar_plot(data.values, xtic_labels, bar_names, "ML models", ylabel)
+        ylabel = get_ylabel(dataset, error_types[0])
+        bar_plot(data.values, xtic_labels, bar_names, "Classification Models", ylabel)
         save_fig(save_dir)
 
     save_dir = "./plot/{}/clean_model.xls".format(error_types[0])
@@ -244,12 +238,8 @@ def plot_multicolumn_clean(result, index_order, columns_order, xtic_labels, bar_
         data = reindex_df(data, index_order, columns_order)
         save_dir = "./plot/{}/clean_test/{}_clean_test.png".format(error_types[0], dataset)
         plt.figure()
-        if error_types[0] == 'missing_values':
-            ylabel = "Change of F1 After Imputing Training Set" if is_metric_f1(dataset) else "Impute Model Accuracy - Clean Model Accuracy"
-        else:
-            ylabel = "Change of F1 After Cleaning Training Set" if is_metric_f1(dataset) else "Change of Accuracy After Cleaning Training set"
-        
-        bar_plot(data.values, xtic_labels, bar_names, "ML models", ylabel)
+        ylabel = get_ylabel(dataset, error_types[0])
+        bar_plot(data.values, xtic_labels, bar_names, "Classification Models", ylabel)
         save_fig(save_dir)
 
     save_dir = "./plot/{}/clean_test.xls".format(error_types[0])

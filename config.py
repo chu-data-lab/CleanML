@@ -32,7 +32,7 @@ Marketing = {
 
 Airbnb = {
     "data_dir": "Airbnb",
-    "error_types": ['missing_values', 'outliers', 'duplicates'],
+    "error_types": ['missing_values', 'outliers', 'duplicates', 'mislabel'],
     "label": 'Rating',
     "categorical_variables": ['Rating'],
     "ml_task": "classification",

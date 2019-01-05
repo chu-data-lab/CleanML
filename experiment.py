@@ -14,14 +14,14 @@ parser.add_argument('--nosave', default=False, action='store_true')
 args = parser.parse_args()
 
 ## setup
-dataset_names = ["Airbnb", "Food", "Restaurant", "DfD", "KDD"]
+dataset_names = ["EGG", "KDD", "USCensus", "Airbnb"]
 model_names = [ "linear_regression", "logistic_regression", "decision_tree_regression", 
                 "decision_tree_classification", "adaboost_classification", 
                 "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
                 "random_forest_regression", "guassian_naive_bayes"]
 
-dataset_names = ['KDD']
-model_names = ["guassian_naive_bayes"]
+# dataset_names = ['KDD']
+# model_names = ["guassian_naive_bayes"]
 
 ## save logging info
 if args.log:

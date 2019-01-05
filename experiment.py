@@ -15,10 +15,8 @@ args = parser.parse_args()
 
 ## setup
 dataset_names = ["EGG", "KDD", "USCensus", "Airbnb"]
-model_names = [ "linear_regression", "logistic_regression", "decision_tree_regression", 
-                "decision_tree_classification", "adaboost_classification", 
-                "adaboost_regression", "knn_regression", "knn_classification", "random_forest_classification",
-                "random_forest_regression", "guassian_naive_bayes"]
+model_names = [ "logistic_regression", "decision_tree_classification", "adaboost_classification", 
+                "knn_classification", "random_forest_classification", "guassian_naive_bayes"]
 
 # dataset_names = ['KDD']
 # model_names = ["guassian_naive_bayes"]

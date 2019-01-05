@@ -64,7 +64,7 @@ def experiment(dataset, error_type, file, model, seed, result):
     # ignore if experiment has been runned before 
     key = "/".join((dataset['data_dir'], error_type, file, model['name'], str(seed)))
     if key in result.keys():
-        print("Ignore. Experiment {} has been runned before.".format(key))
+        print("Ignore experiment {} has been runned before.".format(key))
         return
 
     # print log info

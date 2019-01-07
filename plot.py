@@ -3,15 +3,19 @@ import pandas as pd
 import numpy as np
 import utils
 from matplotlib import pyplot as plt
+from matplotlib import patches
 from table import *
 import sys
 import os
+
+colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'violet', 'grey', 'y']
 
 def save_fig(save_dir):
     directory = os.path.dirname(save_dir)
     if not os.path.exists(directory):
         os.makedirs(directory)
     plt.savefig(save_dir, bbox_inches='tight')
+    plt.clf()
 
 def filter(result, error_type):
     filtered_result = {k:v for k, v in result.items() if k[1] == error_type}
@@ -50,11 +54,11 @@ def bar_plot(data, xtic_labels, bar_names, xlabel, ylabel):
     width = total_width / n_bars
     middle_name = bar_names[n_bars // 2]
 
-    for row, name in zip(data, bar_names):
+    for row, name, c in zip(data, bar_names, colors):
         if name == middle_name:
-            plt.bar(x, row, width=width, label=name, tick_label=xtic_labels)
+            plt.bar(x, row, width=width, label=name, tick_label=xtic_labels, color=c)
         else:
-            plt.bar(x, row, width=width, label=name)
+            plt.bar(x, row, width=width, label=name, color=c)
 
         for i in range(len(x)):
             x[i] = x[i] + width
@@ -67,8 +71,14 @@ def bar_plot(data, xtic_labels, bar_names, xlabel, ylabel):
     ax = plt.gca()
     vals = ax.get_yticks()
     ax.set_yticklabels(['{:,.2%}'.format(x) for x in vals])
-    # if n_bars > 1:
-    #     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+def plot_legend(names, colors, title):
+    # Create a color palette
+    handles = [patches.Patch(color=c, label=x) for x, c in zip(names, colors)]
+    # Create legend
+    plt.legend(handles=handles, ncol=len(names), title=title)
+    # Get current axes object and turn off axis
+    plt.gca().set_axis_off()
 
 def reindex_df(df, index_order, columns_order):
     df = df.reindex(index_order, axis=0)
@@ -91,8 +101,7 @@ def compute_difference(evaluation):
         difference[(dataset, method, model)] = (v - evaluation[(dataset, 'dirty', model)]) / evaluation[(dataset, 'dirty', model)] 
     return difference
 
-
-def plot_column(result, index_order, columns_order, xtic_labels, bar_names, column_name):
+def plot_column(result, index_order, columns_order, xtic_labels, bar_names, column_name, legend_title=None):
     datasets, error_types, methods, models, metrics = seperate_keys(result)
     evaluation = {}
 
@@ -109,15 +118,19 @@ def plot_column(result, index_order, columns_order, xtic_labels, bar_names, colu
         data = reindex_df(data, index_order, columns_order)
         save_dir = "./plot/{}/{}_test/{}_{}_test.png".format(error_types[0], column_name, dataset, column_name)
         
-        plt.figure()
         ylabel = get_ylabel(dataset, error_types[0])
         bar_plot(data.values, xtic_labels, bar_names, "Classification Models", ylabel)
         save_fig(save_dir)
 
+    if legend_title is not None:
+        plot_legend(bar_names, colors, legend_title)
+        legend_dir = "./plot/{}/{}_test/{}_test_legend.png".format(error_types[0], column_name, column_name)
+        save_fig(legend_dir)
+
     save_dir = "./plot/{}/{}_test.xls".format(error_types[0], column_name)
     utils.dict_to_xls(difference, [0, 1], [2], None, save_dir)
 
-def plot_row(result, index_order, columns_order, xtic_labels, bar_names, row_name):
+def plot_row(result, index_order, columns_order, xtic_labels, bar_names, row_name, legend_title=None):
     datasets, error_types, methods, models, metrics = seperate_keys(result)
     evaluation = {}
 
@@ -135,15 +148,19 @@ def plot_row(result, index_order, columns_order, xtic_labels, bar_names, row_nam
         data = reindex_df(data, index_order, columns_order)
         save_dir = "./plot/{}/{}_model/{}_{}_model.png".format(error_types[0], row_name, dataset, row_name)
         
-        plt.figure()
         ylabel = get_ylabel(dataset, error_types[0])
         bar_plot(data.values, xtic_labels, bar_names, "Classification Models", ylabel)
         save_fig(save_dir)
 
+    if legend_title is not None:
+        plot_legend(bar_names, colors, legend_title)
+        legend_dir = "./plot/{}/{}_model/{}_model_legend.png".format(error_types[0], row_name, row_name)
+        save_fig(legend_dir)
+
     save_dir = "./plot/{}/{}_model.xls".format(error_types[0], row_name)
     utils.dict_to_xls(difference, [0, 1], [2], None, save_dir)
 
-def plot_multirow_dirty(result, index_order, columns_order, xtic_labels, bar_names):
+def plot_multirow_dirty(result, index_order, columns_order, xtic_labels, bar_names, legend_title=None):
     datasets, error_types, methods, models, metrics = seperate_keys(result)
     test_files = utils.get_filenames(error_types[0])
     clean_methods = sorted([f for f in test_files if f!='dirty'])[::-1]
@@ -165,15 +182,19 @@ def plot_multirow_dirty(result, index_order, columns_order, xtic_labels, bar_nam
         data = reindex_df(data, index_order, columns_order)
         save_dir = "./plot/{}/dirty_model/{}_dirty_model.png".format(error_types[0], dataset)
         
-        plt.figure()
         ylabel = get_ylabel(dataset, error_types[0])
         bar_plot(data.values, xtic_labels, bar_names, "Classification Models", ylabel)
         save_fig(save_dir)
+    
+    if legend_title is not None:
+        plot_legend(bar_names, colors, legend_title)
+        legend_dir = "./plot/{}/dirty_model/dirty_model_legend.png".format(error_types[0])
+        save_fig(legend_dir)
 
     save_dir = "./plot/{}/dirty_model.xls".format(error_types[0])
     utils.dict_to_xls(difference, [0, 1], [2], None, save_dir)
 
-def plot_multirow_clean(result, index_order, columns_order, xtic_labels, bar_names):
+def plot_multirow_clean(result, index_order, columns_order, xtic_labels, bar_names, legend_title=None):
     datasets, error_types, methods, models, metrics = seperate_keys(result)
     test_files = utils.get_filenames(error_types[0])
     clean_methods = sorted([f for f in test_files if f!='dirty'])[::-1]
@@ -201,15 +222,19 @@ def plot_multirow_clean(result, index_order, columns_order, xtic_labels, bar_nam
         data = get_dataset_slice(df, dataset)
         data = reindex_df(data, index_order, columns_order)
         save_dir = "./plot/{}/clean_model/{}_clean_model.png".format(error_types[0], dataset)
-        plt.figure()
         ylabel = get_ylabel(dataset, error_types[0])
         bar_plot(data.values, xtic_labels, bar_names, "Classification Models", ylabel)
         save_fig(save_dir)
 
+    if legend_title is not None:
+        plot_legend(bar_names, colors, legend_title)
+        legend_dir = "./plot/{}/clean_model/clean_model_legend.png".format(error_types[0])
+        save_fig(legend_dir)
+
     save_dir = "./plot/{}/clean_model.xls".format(error_types[0])
     utils.dict_to_xls(difference, [0, 1], [2], None, save_dir)
 
-def plot_multicolumn_clean(result, index_order, columns_order, xtic_labels, bar_names):
+def plot_multicolumn_clean(result, index_order, columns_order, xtic_labels, bar_names, legend_title=None):
     datasets, error_types, methods, models, metrics = seperate_keys(result)
     test_files = utils.get_filenames(error_types[0])
     clean_methods = sorted([f for f in test_files if f!='dirty'])[::-1]
@@ -242,6 +267,11 @@ def plot_multicolumn_clean(result, index_order, columns_order, xtic_labels, bar_
         bar_plot(data.values, xtic_labels, bar_names, "Classification Models", ylabel)
         save_fig(save_dir)
 
+    if legend_title is not None:
+        plot_legend(bar_names, colors, legend_title)
+        legend_dir = "./plot/{}/clean_test/clean_test_legend.png".format(error_types[0])
+        save_fig(legend_dir)
+
     save_dir = "./plot/{}/clean_test.xls".format(error_types[0])
     utils.dict_to_xls(difference, [0, 1], [2], None, save_dir)
 
@@ -252,13 +282,15 @@ def plot_outliers(summary):
                             "clean_IQR_delete", "clean_IQR_impute_mean_dummy", "clean_IQR_impute_median_dummy",
                             "clean_SD_delete",  "clean_SD_impute_mean_dummy", "clean_SD_impute_median_dummy"]   
     xtic_labels = ["LR", "KNN", "DT", "RF", "AB", "NB"]
-    bar_names = ["Dirty Model", "IF Delete Model", "IF Mean Model", "IF Median Model", "SD Delete Model", "SD Mean Model", "SD Median Model", "IQR Delete Model", "IQR Mean Model", "IQR Median Model"]
-    plot_column(res_outlier, index_order[1:], columns_order, xtic_labels, bar_names[1:], 'dirty')
-    plot_multicolumn_clean(res_outlier, index_order[1:], columns_order, xtic_labels, bar_names[1:])
+    bar_names = ["Dirty", "IF Delete", "IF Mean", "IF Median", "SD Delete", "SD Mean", "SD Median", "IQR Delete", "IQR Mean", "IQR Median"]
+    legend_title = 'Cleaning Methods'
 
-    bar_names = ["Dirty Test", "IF Delete Test", "IF Mean Test", "IF Median Test", "SD Delete Test", "SD Mean Test", "SD Median Test", "IQR Delete Test", "IQR Mean Test", "IQR Median Test"]
-    plot_multirow_dirty(res_outlier, index_order[1:], columns_order, xtic_labels, bar_names[1:])
-    plot_multirow_clean(res_outlier, index_order[1:], columns_order, xtic_labels, bar_names[1:])
+    plot_column(res_outlier, index_order[1:], columns_order, xtic_labels, bar_names[1:], 'dirty', legend_title=legend_title)
+    plot_multicolumn_clean(res_outlier, index_order[1:], columns_order, xtic_labels, bar_names[1:], legend_title=legend_title)
+
+    bar_names = ["Dirty", "IF Delete", "IF Mean", "IF Median", "SD Delete", "SD Mean", "SD Median", "IQR Delete", "IQR Mean", "IQR Median"]
+    plot_multirow_dirty(res_outlier, index_order[1:], columns_order, xtic_labels, bar_names[1:], legend_title=legend_title)
+    plot_multirow_clean(res_outlier, index_order[1:], columns_order, xtic_labels, bar_names[1:], legend_title=legend_title)
 
 def plot_dup_incon(summary, error_type):
     res_duplicates = filter(summary, error_type)
@@ -284,13 +316,15 @@ def plot_mv(summary):
                     "clean_impute_mode_mode", 
                     "clean_impute_mode_dummy"]   
     xtic_labels = ["LR", "KNN", "DT", "RF", "AB", "NB"]
-    bar_names = ["Delete Model", "Mean Mode Model", "Mean Dummy Model", "Median Mode Model", "Median Dummy Model", "Mode Dummy Model"]
-    plot_column(res_mv, index_order[1:], columns_order, xtic_labels, bar_names[1:], 'dirty')
-    plot_multicolumn_clean(res_mv, index_order[1:], columns_order, xtic_labels, bar_names[1:])
+    bar_names = ["Delete", "Mean Mode", "Mean Dummy", "Median Mode", "Median Dummy", "Mode Dummy"]
+    legend_title = 'Imputation Methods'
 
-    bar_names = ["Delete Test", "Mean Mode Test", "Mean Dummy Test", "Median Mode Test", "Median Dummy Test", "Mode Dummy Test"]
-    plot_multirow_dirty(res_mv, index_order[1:], columns_order, xtic_labels, bar_names[1:])
-    plot_multirow_clean(res_mv, index_order[1:], columns_order, xtic_labels, bar_names[1:])
+    plot_column(res_mv, index_order[1:], columns_order, xtic_labels, bar_names[1:], 'dirty', legend_title=legend_title)
+    plot_multicolumn_clean(res_mv, index_order[1:], columns_order, xtic_labels, bar_names[1:], legend_title=legend_title)
+
+    bar_names = ["Delete", "Mean Mode", "Mean Dummy", "Median Mode", "Median Dummy", "Mode Dummy"]
+    plot_multirow_dirty(res_mv, index_order[1:], columns_order, xtic_labels, bar_names[1:], legend_title=legend_title)
+    plot_multirow_clean(res_mv, index_order[1:], columns_order, xtic_labels, bar_names[1:], legend_title=legend_title)
 
 raw_result = utils.load_result()
 summary = summarize(raw_result, form_mean)
@@ -298,4 +332,3 @@ plot_outliers(summary)
 plot_mv(summary)
 plot_dup_incon(summary, 'duplicates')
 plot_dup_incon(summary, 'inconsistency')
-

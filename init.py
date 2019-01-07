@@ -32,7 +32,7 @@ def split(dataset, test_ratio=0.3, seed=1):
     test_size = int(N * test_ratio)
     test = data.iloc[:test_size, :]
     train = data.iloc[test_size:, :]
-    assert((test.values[0] != data.values[0]).all())
+    # assert((test.values[0] != data.values[0]).all())
 
     # save train / test
     save_dir_pfx = os.path.join(raw_dir, 'dirty')

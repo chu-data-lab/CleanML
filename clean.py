@@ -186,7 +186,7 @@ if __name__ == '__main__':
             print("Cleaning outliers for {}.".format(dataset['data_dir']))
             clean_outliers(dataset)
 
-        if args.dup and 'duplicates' in dataset['error_types'] and not dataset['manual_clean_duplicates']:
+        if args.dup and 'duplicates' in dataset['error_types']:
             print("Cleaning duplicates for {}.".format(dataset['data_dir']))
             clean_duplicates(dataset)
 

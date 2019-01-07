@@ -72,7 +72,7 @@ class DuplicatesCleaner(object):
         return is_dup
 
     def repair(self, df, is_dup):
-        not_dup = is_dup == False
+        not_dup = (is_dup.values == False)
         df_clean = df[not_dup]
         return df_clean
 

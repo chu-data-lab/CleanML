@@ -17,10 +17,10 @@ KDD = {
 Citation = {
     "data_dir": "Citation",
     "error_types": ['duplicates'],
-    'key_columns': ['titleWOS', 'yearWOS'],
+    'key_columns': ['title'],
     "label":"CS",
     "ml_task": "classification",
-    "text_variables":["titleWOS", "venueWOS", "keywords", "abstract"],
+    "text_variables":["title"],
 }
 
 Marketing = {
@@ -128,4 +128,4 @@ IMDB = {
 }
 
 datasets = [Airbnb, USCensus, Credit, EGG, Titanic, KDD,
-            Marketing, Sensor, Movie, Food, Restaurant, DfD]
+            Marketing, Sensor, Movie, Food, Restaurant, DfD, Citation]

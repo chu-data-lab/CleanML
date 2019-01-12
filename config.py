@@ -120,12 +120,20 @@ Food = {
     "text_variables":["DBA Name"]
 }
 
-IMDB = {
-    "data_dir": "IMDB",
-    "error_types": ['mislabel'],
-    "label": 'genres',
-    "ml_task": "classification"
+Company = {
+    "data_dir": "Company",
+    "error_types": ["inconsistency"],
+    "label": "Sentiment",
+    "ml_task": "classification",
+    "drop_variables": ["Date", "Unnamed: 0", "Country", "City"]
 }
 
+# IMDB = {
+#     "data_dir": "IMDB",
+#     "error_types": ['mislabel'],
+#     "label": 'genres',
+#     "ml_task": "classification"
+# }
+
 datasets = [Airbnb, USCensus, Credit, EGG, Titanic, KDD,
-            Marketing, Sensor, Movie, Food, Restaurant, DfD, Citation]
+            Marketing, Sensor, Movie, Food, Restaurant, DfD, Citation, Company]

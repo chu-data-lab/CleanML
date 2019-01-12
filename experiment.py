@@ -14,7 +14,7 @@ parser.add_argument('--nosave', default=False, action='store_true')
 args = parser.parse_args()
 
 ## setup
-dataset_names = ["Citation"]
+dataset_names = ["Company"]
 model_names = [ "logistic_regression", "decision_tree_classification", "adaboost_classification", 
                 "knn_classification", "random_forest_classification", "guassian_naive_bayes"]
 

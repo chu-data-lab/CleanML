@@ -39,15 +39,6 @@ Airbnb = {
     'key_columns': ['latitude', 'longitude'],
 }
 
-DfD = {
-    "data_dir": "DfD",
-    "error_types": ['inconsistency'],
-    "text_variables":["Name1"],
-    "label": "Donation",
-    "ml_task": "classification",
-    "class_imbalance": True
-}
-
 Titanic = {
     "data_dir": "Titanic",
     "error_types": ['missing_values'],
@@ -135,5 +126,14 @@ Company = {
 #     "ml_task": "classification"
 # }
 
+# DfD = {
+#     "data_dir": "DfD",
+#     "error_types": ['inconsistency'],
+#     "text_variables":["Name1"],
+#     "label": "Donation",
+#     "ml_task": "classification",
+#     "class_imbalance": True
+# }
+
 datasets = [Airbnb, USCensus, Credit, EGG, Titanic, KDD,
-            Marketing, Sensor, Movie, Food, Restaurant, DfD, Citation, Company]
+            Marketing, Sensor, Movie, Food, Restaurant, Citation, Company]

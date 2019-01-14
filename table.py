@@ -160,3 +160,4 @@ def compare_mislabel(result):
         comparison = compare_four_metrics(four_metrics, file_types)
         comparisons[method] = comparison
     return comparisons
+

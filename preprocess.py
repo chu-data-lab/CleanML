@@ -1,5 +1,4 @@
-"""Preprocess data"""
-
+""" Load and preprocess data"""
 from sklearn.preprocessing import LabelEncoder
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.preprocessing import StandardScaler
@@ -7,10 +6,31 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 import numpy as np
 import pandas as pd
-import sys
+import utils
+
+def load_data(dataset, train_path, test_path_list):
+    """ Load and split data into features and label.
+
+        Args: 
+            dataset (dict): dataset dict in config
+            train_path (string): path for training set
+            test_path_list (list): a list of paths for test set (missing values and outlier have multiple test sets)
+    """
+    # load data 
+    train = utils.load_df(dataset, train_path)
+    test_list = [utils.load_df(dataset, test_dir) for test_dir in test_path_list]
+    
+    # split X, y
+    label = dataset['label']
+    features = [v for v in train.columns if not v == label]
+    X_train, y_train = train.loc[:, features], train.loc[:, label]
+    X_test_list = [test.loc[:, features] for test in test_list]
+    y_test_list = [test.loc[:, label] for test in test_list]
+
+    return X_train, y_train, X_test_list, y_test_list  
 
 def drop_variables(X_train, X_test_list, drop_columns):
-    """drop irrelavant features"""
+    """ Drop irrelavant features"""
     n_test_files = len(X_test_list)
     X_train.drop(columns=drop_columns, inplace=True)
     for i in range(n_test_files):
@@ -81,38 +101,50 @@ def encode_cat_features(X_train, X_test_list):
     X_test_list = np.split(X[n_tr:], test_split)
     return X_train, X_test_list
 
-def preprocess(dataset, X_train, y_train, X_test_list, y_test_list, normalize, down_sample_seed=1):
-    """ Preprocess data
-        
+def preprocess(dataset, error_type, train_file, normalize=True, down_sample_seed=1):
+    """ Load and preprocess data
         Args:
             dataset (dict): dataset dict in config
-            X_train (pd.DataFrame): features (train)
-            y_train (pd.DataFrame): label (train)
-            X_test_list (list): list of features (test)
-            y_test_list (list): list of label (test)
+            error_type (string): error type
+            train_file (string): predix of file of training set
             normalize (bool): whehter to standarize the data
             down_sample_seed: seed for down sampling
     """
+    # get path of train file and test files
+    train_path = utils.get_dir(dataset, error_type, train_file + "_train.csv")
+    test_files = utils.get_test_files(error_type, train_file)
+    test_path_list = [utils.get_dir(dataset, error_type, test_file + "_test.csv") for test_file in test_files]
+    
+    # load data
+    X_train, y_train, X_test_list, y_test_list = load_data(dataset, train_path, test_path_list)
+
+    ## preprocess data
+    # drop irrelavant features
     if "drop_variables" in dataset.keys():
         drop_columns = dataset['drop_variables']
         drop_variables(X_train, X_test_list, drop_columns)
 
+    # down sample if imbalanced
     if "class_imbalance" in dataset.keys() and dataset["class_imbalance"]:
         X_train, y_train = down_sample(X_train, y_train, down_sample_seed)
 
+    # encode label
     if dataset['ml_task'] == 'classification':
         y_train, y_test_list = encode_cat_label(y_train, y_test_list)
 
+    # text embedding
     if "text_variables" in dataset.keys():
         text_columns = dataset["text_variables"]
         X_train, X_test_list = encode_text_features(X_train, X_test_list, y_train, text_columns)
 
+    # encode categorical features
     X_train, X_test_list = encode_cat_features(X_train, X_test_list)
     
+    # normalize data
     if normalize:
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train)
         X_test_list = [scaler.transform(X_test) for X_test in X_test_list]
 
-    return X_train, y_train, X_test_list, y_test_list
+    return X_train, y_train, X_test_list, y_test_list, test_files
 

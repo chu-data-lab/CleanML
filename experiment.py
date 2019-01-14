@@ -1,4 +1,5 @@
 from train import train
+from preprocess import preprocess
 import numpy as np
 import utils
 import json
@@ -14,7 +15,7 @@ parser.add_argument('--nosave', default=False, action='store_true')
 args = parser.parse_args()
 
 ## setup
-dataset_names = ["Company"]
+dataset_names = ["Titanic"]
 model_names = [ "logistic_regression", "decision_tree_classification", "adaboost_classification", 
                 "knn_classification", "random_forest_classification", "guassian_naive_bayes"]
 
@@ -27,7 +28,7 @@ if args.log:
     logging.basicConfig(filename='logging_{}.log'.format(datetime.datetime.now()),level=logging.DEBUG)
 
 def get_coarse_grid(model, random_state):
-    """ Get hyper parameters (coarse grid) """
+    """ Get hyper parameters (coarse random search) """
     np.random.seed(random_state)
     low, high = model["params_range"]
     if model["params_type"] == "real":
@@ -36,9 +37,8 @@ def get_coarse_grid(model, random_state):
         param_grid = {model['params']: np.random.randint(low, high, 20)}
     return param_grid
 
-def get_fine_grid(model, best_param_coarse, random_state):
-    """ Get hyper parameters (fine grid, around the best parameter in coarse search) """
-    np.random.seed(random_state)
+def get_fine_grid(model, best_param_coarse):
+    """ Get hyper parameters (fine grid search, around the best parameter in coarse search) """
     if model["params_type"] == "real":
         base = np.log10(best_param_coarse)
         param_grid = {model['params']: np.linspace(10**(base-0.5), 10**(base+0.5), 20)}
@@ -47,53 +47,58 @@ def get_fine_grid(model, best_param_coarse, random_state):
         param_grid = {model['params']: np.arange(low, low + 20)}
     return param_grid
 
-def experiment(dataset, error_type, file, model, seed, result):
+def experiment(dataset, error_type, train_file, model, seed, result):
     """ Run experiment and save result
         
         Args:
             dataset (dict): dataset dict in config.py
             error_type (string): error type
-            file (string): filename (dirty or clean) 
+            train_file (string): filename of training set (dirty or clean) 
             model (dict): ml model dict in model.py
             seed (int): random seed
             result (dict): dict to save experimental results
-                key (string): dataset_name/error_type/file/model_name/seed
+                key (string): dataset_name/error_type/train_file/model_name/seed
                 value (dict): metric_name: metric
     """
-
-    # ignore if experiment has been runned before 
-    key = "/".join((dataset['data_dir'], error_type, file, model['name'], str(seed)))
+    # ignore if experiment has been ran before 
+    key = "/".join((dataset['data_dir'], error_type, train_file, model['name'], str(seed)))
     if key in result.keys():
-        print("Ignore experiment {} has been runned before.".format(key))
+        print("Ignore experiment {} has been ran before.".format(key))
         return
 
     # print log info
     logging.info("Processing {}".format(key))
     print("Processing {}".format(key))
 
-    # generate random seeds 
     np.random.seed(seed)
-    coarse_param_seed, fine_param_seed, coarse_train_seed, fine_train_seed = np.random.randint(1000, size=4)
-    
-    estimator = model["estimator"]
-    normalize = True # standarize data
 
+    # generate random seeds 
+    coarse_param_seed, down_sample_seed, coarse_train_seed, fine_train_seed = np.random.randint(1000, size=4)
+
+    # load and preprocess data
+    X_train, y_train, X_test_list, y_test_list, test_files = \
+        preprocess(dataset, error_type, train_file, normalize=True, down_sample_seed=down_sample_seed)
+
+    # get model
+    estimator = model["estimator"]
+    
+    # train model
     if "params" not in model.keys():
         # if no hyper parmeter, train directly
-        result_dict = train(dataset, error_type, file, estimator, None, n_jobs=args.cpu, normalize=normalize, random_state=coarse_param_seed)
+        result_dict = train(X_train, y_train, X_test_list, y_test_list, test_files, estimator, None, n_jobs=args.cpu, random_state=coarse_train_seed)
     else:
-        # coarse search
+        # coarse random search
         param_grid = get_coarse_grid(model, coarse_param_seed)
-        result_coarse = train(dataset, error_type, file, estimator, param_grid, n_jobs=args.cpu, normalize=normalize, random_state=coarse_train_seed)
+        result_coarse = train(X_train, y_train, X_test_list, y_test_list, test_files, estimator, param_grid, n_jobs=args.cpu, random_state=coarse_train_seed)
         val_acc_coarse = result_coarse['val_acc']
         
-        # fine search
+        # fine grid search
         best_param_coarse = result_coarse['best_params'][model['params']]
-        param_grid = get_fine_grid(model, best_param_coarse, fine_param_seed)
-        result_fine = train(dataset, error_type, file, estimator, param_grid, n_jobs=args.cpu, normalize=normalize, random_state=fine_train_seed)
+        param_grid = get_fine_grid(model, best_param_coarse)
+        result_fine = train(X_train, y_train, X_test_list, y_test_list, test_files, estimator, param_grid, n_jobs=args.cpu, random_state=fine_train_seed)
         val_acc_fine = result_fine['val_acc']
 
-        # save best result
+        # get best result of two rounds
         if val_acc_fine > val_acc_coarse:
             result_dict = result_fine
         else:
@@ -104,7 +109,7 @@ def experiment(dataset, error_type, file, model, seed, result):
             result_dict['best_params'][model['params']] *= 1.0
 
         # save random seeds
-        result_dict['seeds'] = "{}/{}/{}/{}".format(coarse_param_seed, fine_param_seed, coarse_train_seed, fine_train_seed)
+        result_dict['seeds'] = "{}/{}/{}/{}".format(coarse_param_seed, down_sample_seed, coarse_train_seed, fine_train_seed)
     
     print(result_dict)
     # save result
@@ -123,7 +128,7 @@ if __name__ == '__main__':
     np.random.seed(args.seed)
     seeds = np.random.randint(1000, size=3)
 
-    # run experiments for each dataset, each error type, each model and each seed
+    # run experiments for each dataset, each error type, each train file, each model and each seed
     for d in datasets:
         for e in d["error_types"]:
             for f in utils.get_filenames(e):

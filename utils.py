@@ -5,6 +5,7 @@ import sys
 import json
 import model
 import numpy as np
+from matplotlib import pyplot as plt
 
 def get_dataset(name):
     """
@@ -214,13 +215,14 @@ def dict_to_dfs(dic, row_keys_idx, col_keys_idx, df_idx):
         dfs[k] = df
     return dfs
 
-def dict_to_xls(dic, row_keys_idx, col_keys_idx, sheet_idx, save_dir):
+def dict_to_xls(dic, row_keys_idx, col_keys_idx, save_dir, sheet_idx=None):
     """ Convert dict to excel
     
     Args:
         dic: result dictionary. Keys are tuples.
         row_keys_idx: index of keys for rows, ordered hierarchicallly
         col_keys_idx: index of keys for columns, ordered hierarchicallly
+        sheet_idx: index of keys for sheet
     """
     writer = pd.ExcelWriter(save_dir)
 
@@ -232,26 +234,6 @@ def dict_to_xls(dic, row_keys_idx, col_keys_idx, sheet_idx, save_dir):
         for k, df in dfs.items():
             df.to_excel(writer, '%s'%k)            
     writer.save()
-
-def combine(result):
-    # Combine result from different experiments into a list
-    seeds = list({k.split('/')[4] for k in result.keys()})
-    comb = {}
-    for s in seeds:
-        for k, v in result.items():
-            dataset, error, file, model, seed = k.split('/')
-            if s != seed:
-                continue
-
-            key = (dataset, error, file, model)
-            value = {vk:[vv] for vk, vv in v.items()}
-
-            if key not in comb.keys():
-                comb[key] = value
-            else:
-                for vk, vv in v.items():
-                    comb[key][vk].append(vv)
-    return comb
 
 def replace_result(result1_dir, result2_dir, dataset_name):
     result1 = json.load(open(result1_dir, 'r'))

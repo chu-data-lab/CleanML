@@ -18,35 +18,44 @@ def get_dataset(name):
         sys.exit()
     return dataset[0]
 
-def load_df(dataset, file_dir):
+def load_df(dataset, file_path):
     """
     Get pandas data frame and preprocess categorical variables
 
     Args: 
         dataset: dataset in config.py
-        file_dir: directory of data file
+        file_path: path of data file
     Return:
         df: pandas data frame
     """
-    df = pd.read_csv(file_dir)
+    df = pd.read_csv(file_path)
     if 'categorical_variables' in dataset.keys():
         categories = dataset['categorical_variables']
         for cat in categories:
             df[cat] = df[cat].astype(str).replace('nan', np.nan)
     return df
 
-def load_dfs(dataset, file_dir_pfx):
-    train_dir = file_dir_pfx + '_train.csv'
-    test_dir = file_dir_pfx + '_test.csv'
+def load_dfs(dataset, file_path_pfx, return_version=False):
+    train_dir = file_path_pfx + '_train.csv'
+    test_dir = file_path_pfx + '_test.csv'
     train = load_df(dataset, train_dir)
     test = load_df(dataset, test_dir)
-    return train, test
+    if return_version:
+        directory, file = os.path.split(file_path_pfx)
+        version = get_version(directory, file)
+        return train, test, version
+    else:
+        return train, test
 
-def save_dfs(train, test, save_dir_pfx):
-    train_save_dir = save_dir_pfx + '_train.csv'
-    test_save_dir = save_dir_pfx + '_test.csv'
-    train.to_csv(train_save_dir, index=False)
-    test.to_csv(test_save_dir, index=False)
+def save_dfs(train, test, save_path_pfx, version=None):
+    train_save_path = save_path_pfx + '_train.csv'
+    test_save_path = save_path_pfx + '_test.csv'
+    train.to_csv(train_save_path, index=False)
+    test.to_csv(test_save_path, index=False)
+    if version is not None:
+        directory, file = os.path.split(save_path_pfx)
+        save_version(directory, file, version)
+
 
 def get_dir(dataset, folder=None, file=None, create_folder=False):
     """
@@ -62,7 +71,7 @@ def get_dir(dataset, folder=None, file=None, create_folder=False):
         folder_dir (optional): directory of given folder
         file_dir (optional): directory of given file
     """
-    data_dir = os.path.join(config.root_dir, dataset['data_dir'])
+    data_dir = os.path.join(config.data_dir, dataset['data_dir'])
     if folder is None:
         return data_dir
 
@@ -76,6 +85,23 @@ def get_dir(dataset, folder=None, file=None, create_folder=False):
     file_dir = os.path.join(folder_dir, file)
     return file_dir
 
+def save_version(directory, file, seed):
+    version_path = os.path.join(directory, "version.json")
+    if os.path.exists(version_path):
+        version = json.load(open(version_path, 'r'))
+    else:
+        version = {}
+    version[file] = str(seed)
+    json.dump(version, open(version_path, 'w'))
+
+def get_version(directory, file):
+    version_path = os.path.join(directory, "version.json")
+    if os.path.exists(version_path):
+        version = json.load(open(version_path, 'r'))
+        return int(version[file])
+    else:
+        return None
+    
 def load_result():
     result_dir = config.result_dir
     if os.path.exists(result_dir):
@@ -131,7 +157,7 @@ def delete_result(dataset_name):
         del result[k]
     json.dump(result, open('./result.json', 'w'))
 
-def get_filenames(error_type):
+def get_train_files(error_type):
     if error_type == 'missing_values':
         filenames = ["dirty", 
                     "clean_impute_mean_mode", 

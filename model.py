@@ -1,5 +1,4 @@
 """ML Models"""
-
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor

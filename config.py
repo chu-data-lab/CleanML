@@ -1,8 +1,15 @@
 """Configuration"""
 
 # directory
-root_dir = 'datasets'
+data_dir = 'data'
 result_dir = 'result.json'
+
+# experiment
+root_seed = 1
+n_resplit = 20
+n_retrain = 3
+test_ratio = 0.3
+max_size = 5000
 
 # datasets
 KDD = {
@@ -118,22 +125,6 @@ Company = {
     "ml_task": "classification",
     "drop_variables": ["Date", "Unnamed: 0", "Country", "City"]
 }
-
-# IMDB = {
-#     "data_dir": "IMDB",
-#     "error_types": ['mislabel'],
-#     "label": 'genres',
-#     "ml_task": "classification"
-# }
-
-# DfD = {
-#     "data_dir": "DfD",
-#     "error_types": ['inconsistency'],
-#     "text_variables":["Name1"],
-#     "label": "Donation",
-#     "ml_task": "classification",
-#     "class_imbalance": True
-# }
 
 datasets = [Airbnb, USCensus, Credit, EGG, Titanic, KDD,
             Marketing, Sensor, Movie, Food, Restaurant, Citation, Company]

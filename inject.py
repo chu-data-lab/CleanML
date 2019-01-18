@@ -21,7 +21,7 @@ def uniform_class_noise(df, label, percentage=0.05, random_state=123):
     """
     ## load in csv
     dist = df[label].value_counts(ascending=True)
-    print('class distribution before injection:\n', dist)
+    # print('class distribution before injection:\n', dist)
     
     classes = list(dist.index)
 
@@ -35,7 +35,7 @@ def uniform_class_noise(df, label, percentage=0.05, random_state=123):
     
     ## append the noisy sets
     uniform_df = train1.append(train0)
-    print('\nclass distribution after injection:\n', uniform_df[label].value_counts(ascending=True))
+    # print('\nclass distribution after uniform injection:\n', uniform_df[label].value_counts(ascending=True))
     return uniform_df
 
 def pairwise_class_noise(df, label, percentage=0.05, random_state=123):
@@ -54,7 +54,7 @@ def pairwise_class_noise(df, label, percentage=0.05, random_state=123):
     """
     ## load in csv
     dist = df[label].value_counts(ascending=True)
-    print('class distribution before injection:\n', dist)
+    # print('class distribution before injection:\n', dist)
 
     classes = list(dist.index)
 
@@ -63,8 +63,8 @@ def pairwise_class_noise(df, label, percentage=0.05, random_state=123):
     flip_minor = df.copy()
     flip_minor.loc[df[df[label]==classes[0]].sample(frac=percentage, random_state=random_state).index, label] = classes[1]
 
-    print('\nclass distribution after injection (flip majority class):\n', flip_major[label].value_counts(ascending=True))
-    print('\nclass distribution after injection (flip minority class):\n', flip_minor[label].value_counts(ascending=True))
+    # print('\nclass distribution after injection (flip majority class):\n', flip_major[label].value_counts(ascending=True))
+    # print('\nclass distribution after injection (flip minority class):\n', flip_minor[label].value_counts(ascending=True))
     return flip_major, flip_minor
 
 def inject(dataset):
@@ -78,14 +78,14 @@ def inject(dataset):
     # load clean data
     if 'missing_values' in dataset['error_types']:
         # if raw dataset has missing values, use dataset with mv deleted in missing value folder 
-        clean_path_pfx = utils.get_dir(dataset, 'missing_values', 'dirty')
+        clean_path_pfx = utils.get_dir(dataset, 'missing_values', 'delete')
     else:
         clean_path_pfx = utils.get_dir(dataset, 'raw', 'dirty')
-    clean_train, clean_test = utils.load_dfs(dataset, clean_path_pfx)
+    clean_train, clean_test, version = utils.load_dfs(dataset, clean_path_pfx, return_version=True)
     
     # save clean
     clean_path_pfx = os.path.join(save_dir, 'clean')
-    utils.save_dfs(clean_train, clean_test, clean_path_pfx)
+    utils.save_dfs(clean_train, clean_test, clean_path_pfx, version)
 
 
     label = dataset['label']
@@ -98,11 +98,11 @@ def inject(dataset):
     major_test, minor_test = pairwise_class_noise(clean_test, label)
 
     dirty_path_pfx = os.path.join(save_dir, 'dirty_uniform')
-    utils.save_dfs(uniform_train, uniform_test, dirty_path_pfx)
+    utils.save_dfs(uniform_train, uniform_test, dirty_path_pfx, version)
     dirty_path_pfx = os.path.join(save_dir, 'dirty_major')
-    utils.save_dfs(major_train, major_test, dirty_path_pfx)
+    utils.save_dfs(major_train, major_test, dirty_path_pfx, version)
     dirty_path_pfx = os.path.join(save_dir, 'dirty_minor')
-    utils.save_dfs(minor_train, minor_test, dirty_path_pfx)
+    utils.save_dfs(minor_train, minor_test, dirty_path_pfx, version)
 
 if __name__ == '__main__':
     # datasets to be inject, inject all datasets with error type mislabel if not specified

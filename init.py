@@ -1,7 +1,7 @@
 """ Initialize datasets:
-        Clean missing labels of raw.csv for each dataset to ensure Supervised Learning.
-        Clean missing features for dataset not having "missing_values" in config
-        Split dataset into trian/test
+        Delete missing labels of raw.csv for each dataset to ensure Supervised Learning.
+        Delete missing features for dataset not having "missing_values" in config
+        Split dataset into train/test
 """
 import config
 import utils
@@ -12,40 +12,79 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', default=None)
+parser.add_argument('--max_size', type=int, default=None)
+parser.add_argument('--test_ratio', type=int, default=0.3)
+parser.add_argument('--seed', type=int, default=1)
 args = parser.parse_args()
 
-def split(dataset, test_ratio=0.3, seed=1):
-    """Split dirty dataset to train / test"""
-    
-    # load dirty data
-    raw_dir = utils.get_dir(dataset, 'raw')
-    dirty_path = os.path.join(raw_dir, 'dirty.csv')
-    data = pd.read_csv(dirty_path)
-    
-    # random shuffle
+def delete_missing_labels(raw, label_name):
+    """ Delete missing labels"""
+    label = raw[label_name]
+    is_missing_label = label.isnull()
+    dirty = raw[is_missing_label == False]
+    return dirty
+
+def delete_missing_values(raw):
+    """ Delete missing values"""
+    dirty = raw.dropna()
+    return dirty
+
+def split(data, test_ratio, seed, max_size=None):
+    """ Shuffle and split data to train / test"""
+    # random shuffle 
     np.random.seed(seed)
-    idx = np.random.permutation(data.index)
-    data = data.reindex(idx)
-    
-    # split train / test
-    N, m = data.shape
+    N = data.shape[0]
+    idx = np.random.permutation(N)
+
+    # only use first max_size data if N > max_size
+    if max_size is not None:
+        N = min(N, int(max_size))
+
+    # split train and test
     test_size = int(N * test_ratio)
-    test = data.iloc[:test_size, :]
-    train = data.iloc[test_size:, :]
-    # assert((test.values[0] != data.values[0]).all())
+    idx_train = idx[test_size:N]
+    idx_test = idx[:test_size]
+    train = data.iloc[idx_train]
+    test = data.iloc[idx_test]
+    idx_train = pd.DataFrame(idx_train, columns=["index"])
+    idx_test = pd.DataFrame(idx_test, columns=["index"])
+    return train, test, idx_train, idx_test
+
+def init(dataset, test_ratio=0.3, seed=1, max_size=None):
+    """ Initialize dataset: raw -> dirty -> dirty_train, dirty_test
+        
+        Args:
+            dataset (dict): dataset dict in config.py
+            max_size (int): maximum limit of dataset size
+            test_ratio: ratio of test set
+            seed: seed used to split dataset
+    """
+    print("Initialize dataset {}".format(dataset['data_dir']))
+
+    # load raw data
+    raw_path = utils.get_dir(dataset, 'raw', 'raw.csv')
+    raw = pd.read_csv(raw_path)
+
+    # delete missing labels or all missing values
+    if 'missing_values' not in dataset['error_types']:
+        dirty = delete_missing_values(raw)
+    else:
+        dirty = delete_missing_labels(raw, dataset['label'])
+
+    # split dataset
+    train, test, idx_train, idx_test = split(dirty, test_ratio, seed, max_size)
 
     # save train / test
-    save_dir_pfx = os.path.join(raw_dir, 'dirty')
-    utils.save_dfs(train, test, save_dir_pfx)
+    save_path_pfx = utils.get_dir(dataset, 'raw', 'dirty')
+    utils.save_dfs(train, test, save_path_pfx)
 
     # save index
-    idx = pd.DataFrame(idx, columns=['index'])
-    idx_test = idx[:test_size]
-    idx_train = idx[test_size:]
-    idx_dir_pfx = os.path.join(raw_dir, 'idx')
-    utils.save_dfs(idx_train, idx_test, idx_dir_pfx)
+    save_path_pfx = utils.get_dir(dataset, 'raw', 'idx')
+    utils.save_dfs(idx_train, idx_test, save_path_pfx)
 
-    return train, test
+    # save the version (seed) of dataset
+    raw_dir = utils.get_dir(dataset, 'raw')
+    utils.save_version(raw_dir, 'dirty', seed)
 
 if __name__ == '__main__':
     # datasets to be initialized, initialze all datasets if not specified
@@ -53,29 +92,4 @@ if __name__ == '__main__':
     
     # raw -> dirty
     for dataset in datasets:
-        print("Initialize dataset {}".format(dataset['data_dir']))
-
-        # load raw data
-        raw_path = utils.get_dir(dataset, 'raw', 'raw.csv')
-        if not os.path.exists(raw_path):
-            continue
-        raw = pd.read_csv(raw_path)
-        
-        # clean records with missing labels for all datasets
-        # clean records with missing features for datasets not used for missing values 
-        if 'missing_values' not in dataset['error_types']:
-            dirty = raw.dropna()
-        else:
-            label = raw[dataset['label']]
-            is_missing_label = label.isnull()
-            dirty = raw[is_missing_label == False]
-
-        # save dirty data
-        save_path = utils.get_dir(dataset, 'raw', 'dirty.csv')
-        dirty.to_csv(save_path, index=False)
-
-    # dirty -> dirty train / test
-    for dataset in datasets:
-        print("Split dataset {}".format(dataset['data_dir']))
-        train, test = split(dataset)
-        print(train.shape, test.shape)
+        init(dataset, max_size=args.max_size, test_ratio=args.test_ratio, seed=args.seed)

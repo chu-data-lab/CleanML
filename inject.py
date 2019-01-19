@@ -4,10 +4,6 @@ import os
 import argparse
 import utils
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', default=None)
-args = parser.parse_args()
-
 def uniform_class_noise(df, label, percentage=0.05, random_state=123):
     """Uniform class noise in a binary classification dataset. 
     x% of the examples are corrupted. 
@@ -105,6 +101,10 @@ def inject(dataset):
     utils.save_dfs(minor_train, minor_test, dirty_path_pfx, version)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', default=None)
+    args = parser.parse_args()
+
     # datasets to be inject, inject all datasets with error type mislabel if not specified
     datasets = [utils.get_dataset(args.dataset)] if args.dataset is not None else config.datasets
 

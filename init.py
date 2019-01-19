@@ -10,13 +10,6 @@ import numpy as np
 import os
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', default=None)
-parser.add_argument('--max_size', type=int, default=None)
-parser.add_argument('--test_ratio', type=int, default=0.3)
-parser.add_argument('--seed', type=int, default=1)
-args = parser.parse_args()
-
 def delete_missing_labels(raw, label_name):
     """ Delete missing labels"""
     label = raw[label_name]
@@ -50,6 +43,19 @@ def split(data, test_ratio, seed, max_size=None):
     idx_test = pd.DataFrame(idx_test, columns=["index"])
     return train, test, idx_train, idx_test
 
+def reset(dataset):
+    """ Reset dataset"""
+    # delete folders for each error
+    for error in dataset['error_types']:
+        utils.remove(utils.get_dir(dataset, error))
+    
+    # delete dirty_train and dirty_test in raw folder
+    utils.remove(utils.get_dir(dataset, 'raw', 'dirty_train.csv'))
+    utils.remove(utils.get_dir(dataset, 'raw', 'dirty_test.csv'))
+    utils.remove(utils.get_dir(dataset, 'raw', 'idx_train.csv'))
+    utils.remove(utils.get_dir(dataset, 'raw', 'idx_test.csv'))
+    utils.remove(utils.get_dir(dataset, 'raw', 'version.json'))
+
 def init(dataset, test_ratio=0.3, seed=1, max_size=None):
     """ Initialize dataset: raw -> dirty -> dirty_train, dirty_test
         
@@ -78,18 +84,29 @@ def init(dataset, test_ratio=0.3, seed=1, max_size=None):
     save_path_pfx = utils.get_dir(dataset, 'raw', 'dirty')
     utils.save_dfs(train, test, save_path_pfx)
 
+    # save the version (seed) of dataset
+    utils.save_version(save_path_pfx, seed)
+    
     # save index
     save_path_pfx = utils.get_dir(dataset, 'raw', 'idx')
     utils.save_dfs(idx_train, idx_test, save_path_pfx)
 
-    # save the version (seed) of dataset
-    raw_dir = utils.get_dir(dataset, 'raw')
-    utils.save_version(raw_dir, 'dirty', seed)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', default=None)
+    parser.add_argument('--max_size', type=int, default=None)
+    parser.add_argument('--test_ratio', type=int, default=0.3)
+    parser.add_argument('--seed', type=int, default=1)
+    parser.add_argument('--reset', default=False, action='store_true' )
+    args = parser.parse_args()
+
     # datasets to be initialized, initialze all datasets if not specified
     datasets = [utils.get_dataset(args.dataset)] if args.dataset is not None else config.datasets
     
     # raw -> dirty
     for dataset in datasets:
-        init(dataset, max_size=args.max_size, test_ratio=args.test_ratio, seed=args.seed)
+        if args.reset:
+            reset(dataset)
+        else:
+            init(dataset, max_size=args.max_size, test_ratio=args.test_ratio, seed=args.seed)

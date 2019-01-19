@@ -8,6 +8,16 @@ import numpy as np
 import pandas as pd
 import utils
 
+def check_version(dataset, error_type, train_file):
+    """ Check whether train and test are of the same version"""
+    train_path_pfx = utils.get_dir(dataset, error_type, train_file)
+    train_version = utils.get_version(train_path_pfx)
+    test_files = utils.get_test_files(error_type, train_file)
+    for test_file in test_files:
+        test_path_pfx = utils.get_dir(dataset, error_type, test_file)
+        test_version = utils.get_version(test_path_pfx)
+        assert(train_version == test_version)
+        
 def load_data(dataset, train_path, test_path_list):
     """ Load and split data into features and label.
 
@@ -106,10 +116,13 @@ def preprocess(dataset, error_type, train_file, normalize=True, down_sample_seed
         Args:
             dataset (dict): dataset dict in config
             error_type (string): error type
-            train_file (string): predix of file of training set
+            train_file (string): prefix of file of training set
             normalize (bool): whehter to standarize the data
             down_sample_seed: seed for down sampling
     """
+    # check train and test version are consistent
+    check_version(dataset, error_type, train_file)
+
     # get path of train file and test files
     train_path = utils.get_dir(dataset, error_type, train_file + "_train.csv")
     test_files = utils.get_test_files(error_type, train_file)

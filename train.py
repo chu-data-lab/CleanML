@@ -111,10 +111,15 @@ def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
 
     if val_acc_fine > val_acc_coarse:
         result = result_fine
-        best_model = best_param_fine
+        best_model = best_model_fine
     else:
         result = result_coarse
-        best_model = best_param_coarse
+        best_model = best_model_coarse
+
+    # convert int to float to avoid json error
+    if model["params_type"] == "int":
+            result['best_params'][model['params']] *= 1.0
+
     return best_model, result
 
 def train_and_evaluate(X_train, y_train, X_test_list, y_test_list, test_files, model, n_jobs=1, seed=1):

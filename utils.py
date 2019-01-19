@@ -3,9 +3,10 @@ import os
 import config
 import sys
 import json
-import model
 import numpy as np
 from matplotlib import pyplot as plt
+import shutil
+
 
 def get_dataset(name):
     """
@@ -41,8 +42,7 @@ def load_dfs(dataset, file_path_pfx, return_version=False):
     train = load_df(dataset, train_dir)
     test = load_df(dataset, test_dir)
     if return_version:
-        directory, file = os.path.split(file_path_pfx)
-        version = get_version(directory, file)
+        version = get_version(file_path_pfx)
         return train, test, version
     else:
         return train, test
@@ -53,8 +53,7 @@ def save_dfs(train, test, save_path_pfx, version=None):
     train.to_csv(train_save_path, index=False)
     test.to_csv(test_save_path, index=False)
     if version is not None:
-        directory, file = os.path.split(save_path_pfx)
-        save_version(directory, file, version)
+        save_version(save_path_pfx, version)
 
 
 def get_dir(dataset, folder=None, file=None, create_folder=False):
@@ -85,7 +84,8 @@ def get_dir(dataset, folder=None, file=None, create_folder=False):
     file_dir = os.path.join(folder_dir, file)
     return file_dir
 
-def save_version(directory, file, seed):
+def save_version(file_path_pfx, seed):
+    directory, file = os.path.split(file_path_pfx)
     version_path = os.path.join(directory, "version.json")
     if os.path.exists(version_path):
         version = json.load(open(version_path, 'r'))
@@ -94,7 +94,8 @@ def save_version(directory, file, seed):
     version[file] = str(seed)
     json.dump(version, open(version_path, 'w'))
 
-def get_version(directory, file):
+def get_version(file_path_pfx):
+    directory, file = os.path.split(file_path_pfx)
     version_path = os.path.join(directory, "version.json")
     if os.path.exists(version_path):
         version = json.load(open(version_path, 'r'))
@@ -124,7 +125,7 @@ def save_result(key, res):
     json.dump(result, open('./result.json', 'w'))
     
 def get_model(model_name):
-    models = model.models
+    models = config.models
     mod = [m for m in models if m['name'] == model_name ]
     if len(mod) == 0:
         print("Invalid model name: {}".format(model_name))
@@ -143,7 +144,7 @@ def get_test_files(error_type, train_file):
     if file_type == "clean":
         return ["dirty", train_file]
     else:
-        return get_filenames(error_type)
+        return get_train_files(error_type)
 
 def delete_result(dataset_name):
     result = load_result()
@@ -267,3 +268,9 @@ def replace_result(result1_dir, result2_dir, dataset_name):
     rep = {k:v for k, v in result2.items() if dataset_name == k.split('/')[0]}
     result = {**result1, **rep}
     json.dump(result, open('./result.json', 'w'))
+
+def remove(path):
+    if os.path.isfile(path):
+        os.remove(path) 
+    elif os.path.isdir(path):
+        shutil.rmtree(path)

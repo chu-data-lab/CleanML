@@ -1,5 +1,4 @@
 """Clean datasets"""
-
 from cleaners import *
 import pandas as pd
 import config
@@ -8,10 +7,6 @@ import argparse
 import utils
 from inject import inject
 import sys
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', default=None)
-args = parser.parse_args()
 
 def clean_mv(dataset):
     """ Clean missing values
@@ -207,6 +202,10 @@ def clean(dataset):
         inject(dataset)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', default=None)
+    args = parser.parse_args()
+
     # datasets to be cleaned, clean all datasets if not specified
     datasets = [utils.get_dataset(args.dataset)] if args.dataset is not None else config.datasets
 

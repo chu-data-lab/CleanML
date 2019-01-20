@@ -96,7 +96,7 @@ def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
     # hyperparameter search
     if "params" not in model.keys():
         # if no hyper parmeter, train directly
-        result = train(X_train, y_train, estimator, None, n_jobs=n_jobs, seed=coarse_train_seed)
+        best_model, result = train(X_train, y_train, estimator, None, n_jobs=n_jobs, seed=coarse_train_seed)
     else:
         # coarse random search
         param_grid = get_coarse_grid(model, coarse_param_seed)
@@ -109,16 +109,16 @@ def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
         best_model_fine, result_fine = train(X_train, y_train, estimator, param_grid, n_jobs=n_jobs, seed=fine_train_seed)
         val_acc_fine = result_fine['val_acc']
 
-    if val_acc_fine > val_acc_coarse:
-        result = result_fine
-        best_model = best_model_fine
-    else:
-        result = result_coarse
-        best_model = best_model_coarse
+        if val_acc_fine > val_acc_coarse:
+            result = result_fine
+            best_model = best_model_fine
+        else:
+            result = result_coarse
+            best_model = best_model_coarse
 
-    # convert int to float to avoid json error
-    if model["params_type"] == "int":
-            result['best_params'][model['params']] *= 1.0
+        # convert int to float to avoid json error
+        if model["params_type"] == "int":
+                result['best_params'][model['params']] *= 1.0
 
     return best_model, result
 

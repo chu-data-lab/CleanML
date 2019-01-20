@@ -1,6 +1,5 @@
 from init import init
 from experiment import experiment
-from experiment_parallel import experiment_parallel
 from clean import clean
 import numpy as np
 import utils

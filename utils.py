@@ -132,19 +132,59 @@ def get_model(model_name):
         sys.exit()
     return mod[0]
 
+def get_train_files(error_type):
+    if error_type == 'missing_values':
+        filenames = ["delete", 
+                    "impute_mean_mode", 
+                    "impute_mean_dummy", 
+                    "impute_median_mode", 
+                    "impute_median_dummy", 
+                    "impute_mode_mode", 
+                    "impute_mode_dummy"]
+    elif error_type == 'outliers':
+        filenames = ["dirty", 
+                     "clean_SD_delete", 
+                     "clean_iso_forest_delete", 
+                     "clean_IQR_delete", 
+                     "clean_SD_impute_mean_dummy", 
+                     "clean_IQR_impute_mean_dummy", 
+                     "clean_iso_forest_impute_mean_dummy", 
+                     "clean_SD_impute_median_dummy",
+                     "clean_IQR_impute_median_dummy", 
+                     "clean_iso_forest_impute_median_dummy",
+                     "clean_SD_impute_mode_dummy",
+                     "clean_IQR_impute_mode_dummy", 
+                     "clean_iso_forest_impute_mode_dummy"]
+    elif error_type == 'mislabel':
+        filenames = ["dirty_uniform", 
+                     "dirty_major",
+                     "dirty_minor",
+                     "clean"]
+    else:
+        filenames = ["dirty", "clean"]
+    return filenames
+    
 def get_test_files(error_type, train_file):
-    file_type = train_file[0:5]
+    if error_type == "missing_values":
+        if train_file == "delete":
+            return get_train_files(error_type)
+        else:
+            return ["delete", train_file]
 
-    if error_type == "mislabel":
-        if file_type == "clean":
-            return get_filenames(error_type)
+    elif error_type == "mislabel":
+        if train_file == "clean":
+            return get_train_files(error_type)
         else:
             return ["clean", train_file]
-    
-    if file_type == "clean":
-        return ["dirty", train_file]
+
+    elif error_type == "outliers":
+        if train_file == "dirty":
+            return get_train_files(error_type)
+        else:
+            return ["dirty", train_file]
+            
     else:
-        return get_train_files(error_type)
+        return ["dirty", "clean"]
 
 def delete_result(dataset_name):
     result = load_result()
@@ -157,35 +197,6 @@ def delete_result(dataset_name):
         print("delete {}".format(k))
         del result[k]
     json.dump(result, open('./result.json', 'w'))
-
-def get_train_files(error_type):
-    if error_type == 'missing_values':
-        filenames = ["dirty", 
-                    "clean_impute_mean_mode", 
-                    "clean_impute_mean_dummy", 
-                    "clean_impute_median_mode", 
-                    "clean_impute_median_dummy", 
-                    "clean_impute_mode_mode", 
-                    "clean_impute_mode_dummy"]
-    elif error_type == 'outliers':
-        filenames = ["dirty", 
-                     "clean_SD_delete", 
-                     "clean_iso_forest_delete", 
-                     "clean_IQR_delete", 
-                     "clean_SD_impute_mean_dummy", 
-                     "clean_IQR_impute_mean_dummy", 
-                     "clean_iso_forest_impute_mean_dummy", 
-                     "clean_SD_impute_median_dummy",
-                     "clean_IQR_impute_median_dummy", 
-                     "clean_iso_forest_impute_median_dummy"]
-    elif error_type == 'mislabel':
-        filenames = ["dirty_uniform", 
-                     "dirty_major",
-                     "dirty_minor",
-                     "clean"]
-    else:
-        filenames = ["dirty", "clean"]
-    return filenames
 
 def dict_to_df(dic, row_keys_idx, col_keys_idx):
     """ Convert dict to data frame

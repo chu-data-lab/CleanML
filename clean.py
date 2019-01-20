@@ -107,7 +107,7 @@ def clean_duplicates(dataset):
         dirty_path_pfx = utils.get_dir(dataset, "inconsistency", 'clean') 
     elif 'missing_values' in dataset['error_types']:
         # if dataset has missing values, use dataset with mv deleted in missing value folder 
-        dirty_path_pfx = utils.get_dir(dataset, "missing_values", 'dirty')
+        dirty_path_pfx = utils.get_dir(dataset, "missing_values", 'delete')
     else:
         dirty_path_pfx = utils.get_dir(dataset, 'raw', 'dirty')
     dirty_train, dirty_test, version = utils.load_dfs(dataset, dirty_path_pfx, return_version=True)

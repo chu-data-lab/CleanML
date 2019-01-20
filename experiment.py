@@ -58,7 +58,7 @@ def experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
                         continue
         
                     print("Processing {}".format(key)) 
-                    res = one_experiment(dataset, error, train_file, model, seed, n_jobs)
+                    res = one_experiment(dataset, error, train_file, model, seed, n_jobs=n_jobs)
                     if not nosave:
                         utils.save_result(key, res)
 

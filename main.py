@@ -29,7 +29,7 @@ if __name__ == '__main__':
     datasets = [utils.get_dataset(args.dataset)] if args.dataset is not None else config.datasets
     
     for dataset in datasets:
-        logging.info("Experiment on {}".format(dataset['data_dir']))
+        logging.debug("Experiment on {}".format(dataset['data_dir']))
         for i, seed in enumerate(split_seeds):
             tic = time.time()
             init(dataset, seed=seed, max_size=config.max_size)
@@ -38,7 +38,7 @@ if __name__ == '__main__':
             toc = time.time()
             t = toc - tic
             remaining = t*(len(split_seeds)-i-1)
-            logging.info("{}-th experiment takes {}s. Estimated remaining time: {}".format(i, t, remaining))
+            logging.debug("{}-th experiment takes {}s. Estimated remaining time: {}".format(i, t, remaining))
 
 
 

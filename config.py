@@ -136,8 +136,7 @@ Company = {
     "drop_variables": ["Date", "Unnamed: 0", "Country", "City"]
 }
 
-datasets = [Airbnb, USCensus, Credit, EGG, Titanic, KDD,
-            Marketing, Sensor, Movie, Restaurant, Citation]
+datasets = [Airbnb, USCensus, EGG, Titanic, Marketing, Sensor, Movie, Restaurant, Citation]
 
 # models
 logistic_reg = {

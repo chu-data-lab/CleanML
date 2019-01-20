@@ -1,5 +1,6 @@
 from init import init
 from experiment import experiment
+from experiment_parallel import experiment_parallel
 from clean import clean
 import numpy as np
 import utils
@@ -39,7 +40,3 @@ if __name__ == '__main__':
             t = toc - tic
             remaining = t*(len(split_seeds)-i-1)
             logging.debug("{}-th experiment takes {}s. Estimated remaining time: {}".format(i, t, remaining))
-
-
-
-

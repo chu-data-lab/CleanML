@@ -13,6 +13,7 @@ from sklearn.linear_model import RANSACRegressor
 # directory
 data_dir = 'data'
 result_dir = 'result.json'
+table_dir = 'table'
 
 # experiment
 root_seed = 1

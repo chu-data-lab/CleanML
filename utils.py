@@ -7,7 +7,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 import shutil
 
-
 def get_dataset(name):
     """
     Get dataset dict in config.py given name
@@ -113,14 +112,12 @@ def load_result():
 
 def save_result(key, res):
     result = load_result()
-    val_acc = res["val_acc"]
+    result[key] = res
+    json.dump(result, open('./result.json', 'w'))
 
-    if key in result.keys():
-        best_val_acc = result[key]["val_acc"]
-    else:
-        best_val_acc = float('-inf')
-
-    if val_acc > best_val_acc or np.isnan(val_acc):
+def save_result_list(key_list, res_list):
+    result = load_result()
+    for key, res in zip(key_list, res_list):
         result[key] = res
     json.dump(result, open('./result.json', 'w'))
     

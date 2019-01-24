@@ -37,7 +37,10 @@ if __name__ == '__main__':
                 print("Ignore {}-th experiment on {} that has been completed before.".format(i, dataset['data_dir']))
                 continue
             tic = time.time()
-            init(dataset, seed=seed, max_size=config.max_size)
+            if "class_imbalance" in dataset.keys() and dataset["class_imbalance"]:
+                init(dataset, seed=seed, max_size=config.max_size*10)
+            else:
+                init(dataset, seed=seed, max_size=config.max_size)
             clean(dataset)
             if args.parallel:
                 experiment_parallel(dataset, n_retrain=config.n_retrain, n_jobs=args.cpu, nosave=args.nosave, seed=experiment_seed)

@@ -50,12 +50,13 @@ def experiment_parallel(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
 
     # load result dict
     result = utils.load_result()
+    pool = Pool(n_jobs)
     
     # run experiments
-    args = []
-    keys = []
     for error in dataset["error_types"]:
         for train_file in utils.get_train_files(error):
+            args = []
+            keys = []
             for model in config.models:
                 for seed in seeds:
                     version = utils.get_version(utils.get_dir(dataset, error, train_file))
@@ -64,9 +65,8 @@ def experiment_parallel(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
                         args.append((dataset, error, train_file, model, seed, 1, key)) 
                         keys.append(key)
 
-    if len(args) > 0:
-        pool = Pool(n_jobs)
-        res = pool.map(one_experiment_helper, args)
-        
-        if not nosave:
-            utils.save_result_list(keys, res)
+            if len(args) > 0:
+                res = pool.map(one_experiment_helper, args)
+                
+                if not nosave:
+                    utils.save_result_list(keys, res)

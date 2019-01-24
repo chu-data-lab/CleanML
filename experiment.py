@@ -54,7 +54,7 @@ def experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
                     key = "/".join((dataset['data_dir'], 'v'+str(version), error, train_file, model['name'], str(seed)))
 
                     if key in result.keys():
-                        print("Ignore experiment {} has been ran before.".format(key))
+                        print("Ignore experiment {} that has been completed before.".format(key))
                         continue
         
                     print("Processing {}".format(key)) 

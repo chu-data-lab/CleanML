@@ -194,21 +194,21 @@ def save_dfs(dfs, save_dir):
     writer.save()
 
 if __name__ == '__main__':
-    # result = utils.load_result()
-    # result = group(result, 5)
-    # result = reduce_by_mean(result)
+    result = utils.load_result()
+    result = group(result, 5)
+    result = reduce_by_mean(result)
     # mv_comp, mv_metrics = compare_mv(result, t_test)
-    # out_comp, out_metrics = compare_out(result, t_test)
+    out_comp, out_metrics = compare_out(result, t_test)
     # ml_comp,  ml_metrics = compare_mislabel(result, t_test)
     # dup_comp, dup_metrics = compare_dup_incon(result, "duplicates", t_test)
-    # # incon_comp, incon_metrics = compare_dup_incon(result, "inconsistency")
+    # incon_comp, incon_metrics = compare_dup_incon(result, "inconsistency")
     # save_dfs(mv_comp, "./table/t_test/missing_values.xls")
-    # save_dfs(out_comp, "./table/t_test/outliers.xls")
+    save_dfs(out_comp, "./table/t_test/outliers.xls")
     # save_dfs(ml_comp, "./table/t_test/mislabel.xls")
     # save_dfs(dup_comp, "./table/t_test/duplicates.xls")
 
     # save_dfs(mv_metrics, "./table/four_metrics/missing_values.xls")
-    # save_dfs(out_metrics, "./table/four_metrics/outliers.xls")
+    save_dfs(out_metrics, "./table/four_metrics/outliers.xls")
     # save_dfs(ml_metrics, "./table/four_metrics/mislabel.xls")
     # save_dfs(dup_metrics, "./table/four_metrics/duplicates.xls")
 
@@ -217,19 +217,4 @@ if __name__ == '__main__':
     # four_metrics = get_four_metrics(result, 'missing_values', ['delete', 'impute_mean_mode'])
     # print(compare_four_metrics(four_metrics, ['delete', 'impute_mean_mode'], ttest_rel))
 
-    a = [0.38, 0.356666667,0.333333333,0.313333333,0.313333333,0.356666667,0.313333333,0.353333333,0.373333333,0.283333333,0.376666667,0.32,0.38,0.29,0.276666667,0.483333333,0.31,0.343333333,0.316666667]
-    b = [0.39, 0.363333333, 0.443333333,0.313333333,0.313333333,0.36,0.3,0.353333333,0.376666667,0.276666667,0.336666667,0.32,0.38,0.29,0.276666667,0.483333333,0.306666667,0.343333333,0.316666667]
-    plt.plot(a, label="D")
-    plt.plot(b, label="B")
-    print(t_test(a, b))
-    plt.legend()
-
-    a = [0.819333333,0.822666667,0.884666667,0.871333333,0.86,0.820666667,0.820666667,0.858666667,0.842666667,0.858666667,0.845333333,0.869333333,0.818,0.814,0.852,0.829333333,0.859333333,0.835333333,0.843333333]
-    b = [0.814,0.824,0.882666667,0.868666667,0.856666667,0.812666667,0.824666667,0.857333333,0.836,0.861333333,0.841333333,0.862,0.806666667,0.810666667,0.859333333,0.825333333,0.856,0.832666667,0.836]
-    plt.figure()
-    plt.plot(a, label="D")
-    plt.plot(b, label="B")
-    print(t_test(a, b))
-    plt.legend()
-    plt.show()
 

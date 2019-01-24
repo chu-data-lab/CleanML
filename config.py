@@ -83,7 +83,7 @@ USCensus = {
 
 Restaurant = {
     "data_dir": "Restaurant",
-    "error_types": ['duplicates'],
+    "error_types": ['duplicates', 'inconsistency'],
     "label": "priceRange",
     "ml_task": "classification",
     "drop_variables": ["streetAddress", "telephone", "website"],
@@ -110,7 +110,7 @@ Sensor = {
 
 Movie = {
     "data_dir": "Movie",
-    "error_types": ['duplicates'],
+    "error_types": ['duplicates', 'inconsistency'],
     "key_columns": ["title", "year"],
     "categorical_variables": ["genres"],
     "text_variables": ["title"],
@@ -134,10 +134,10 @@ Company = {
     "error_types": ["inconsistency"],
     "label": "Sentiment",
     "ml_task": "classification",
-    "drop_variables": ["Date", "Unnamed: 0", "Country", "City"]
+    "drop_variables": ["Date", "Unnamed: 0", "City"]
 }
 
-datasets = [Airbnb, USCensus, EGG, Titanic, Marketing, Sensor, Movie, Restaurant, Citation]
+datasets = [Airbnb, USCensus, EGG, Titanic, Marketing, Sensor, Movie, Restaurant, Citation, Company]
 
 # models
 logistic_reg = {

@@ -282,3 +282,21 @@ def remove(path):
         os.remove(path) 
     elif os.path.isdir(path):
         shutil.rmtree(path)
+
+def check_completed(dataset, split_seed, experiment_seed):
+    result = load_result()
+    np.random.seed(experiment_seed)
+    seeds = np.random.randint(10000, size=config.n_retrain)
+    for error in dataset['error_types']:
+        for model in config.models:
+            for train_file in get_train_files(error):
+                for s in seeds:
+                    key = "{}/v{}/{}/{}/{}/{}".format(dataset['data_dir'], split_seed, error, train_file, model['name'], s)
+                    if key not in result.keys():
+                        print(key)
+                        return False
+    return True
+
+
+
+

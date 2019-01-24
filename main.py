@@ -33,6 +33,9 @@ if __name__ == '__main__':
     for dataset in datasets:
         logging.debug("Experiment on {}".format(dataset['data_dir']))
         for i, seed in enumerate(split_seeds):
+            if utils.check_completed(dataset, seed, experiment_seed):
+                print("Ignore {}-th experiment on {} that has been completed before.".format(i, dataset['data_dir']))
+                continue
             tic = time.time()
             init(dataset, seed=seed, max_size=config.max_size)
             clean(dataset)
@@ -41,6 +44,6 @@ if __name__ == '__main__':
             else:
                 experiment(dataset, n_retrain=config.n_retrain, n_jobs=args.cpu, nosave=args.nosave, seed=experiment_seed)
             toc = time.time()
-            t = toc - tic
-            remaining = t*(len(split_seeds)-i-1) / 60
-            logging.debug("{}-th experiment takes {}s. Estimated remaining time: {} min".format(i, t, remaining))
+            t = (toc - tic) / 60
+            remaining = t*(len(split_seeds)-i-1) 
+            logging.debug("{}-th experiment takes {} min. Estimated remaining time: {} min".format(i, t, remaining))

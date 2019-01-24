@@ -49,7 +49,7 @@ def experiment_parallel(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
     seeds = np.random.randint(10000, size=n_retrain)
 
     # load result dict
-    result = utils.load_result()
+    result = utils.load_result(dataset['data_dir'])
     pool = Pool(n_jobs)
     
     # run experiments
@@ -69,4 +69,4 @@ def experiment_parallel(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
                 res = pool.map(one_experiment_helper, args)
                 
                 if not nosave:
-                    utils.save_result_list(keys, res)
+                    utils.save_result_list(dataset['data_dir'], keys, res)

@@ -43,7 +43,7 @@ def experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
     seeds = np.random.randint(10000, size=n_retrain)
 
     # load result dict
-    result = utils.load_result()
+    result = utils.load_result(dataset['data_dir'])
 
     # run experiments
     for error in dataset["error_types"]:
@@ -60,7 +60,7 @@ def experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
                     print("Processing {}".format(key)) 
                     res = one_experiment(dataset, error, train_file, model, seed, n_jobs=n_jobs)
                     if not nosave:
-                        utils.save_result(key, res)
+                        utils.save_result(dataset['data_dir'], key, res)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

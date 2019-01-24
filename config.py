@@ -12,7 +12,7 @@ from sklearn.linear_model import RANSACRegressor
 
 # directory
 data_dir = 'data'
-result_dir = 'result.json'
+result_dir = 'result'
 table_dir = 'table'
 
 # experiment

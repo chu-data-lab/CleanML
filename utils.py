@@ -102,24 +102,31 @@ def get_version(file_path_pfx):
     else:
         return None
     
-def load_result():
-    result_dir = config.result_dir
-    if os.path.exists(result_dir):
-        result = json.load(open(result_dir, 'r'))
+def load_result(dataset_name=None):
+    if dataset_name is None:
+        files = [file for file in os.listdir(config.result_dir) if file.endswith('_result.json')]
+        result_path = [os.path.join(config.result_dir, file) for file in files]
     else:
-        result = {}
+        result_path = [os.path.join(config.result_dir, '{}_result.json'.format(dataset_name))]
+
+    result = {}
+    for path in result_path:
+        if os.path.exists(path):
+            result.update(json.load(open(path, 'r')))
     return result
 
-def save_result(key, res):
-    result = load_result()
+def save_result(dataset_name, key, res):
+    result = load_result(dataset_name)
     result[key] = res
-    json.dump(result, open('./result.json', 'w'))
+    result_path = os.path.join(config.result_dir, '{}_result.json'.format(dataset_name))
+    json.dump(result, open(result_path, 'w'))
 
-def save_result_list(key_list, res_list):
-    result = load_result()
+def save_result_list(dataset_name, key_list, res_list):
+    result = load_result(dataset_name)
     for key, res in zip(key_list, res_list):
         result[key] = res
-    json.dump(result, open('./result.json', 'w'))
+    result_path = os.path.join(config.result_dir, '{}_result.json'.format(dataset_name))
+    json.dump(result, open(result_path, 'w'))
     
 def get_model(model_name):
     models = config.models
@@ -182,18 +189,6 @@ def get_test_files(error_type, train_file):
             
     else:
         return ["dirty", "clean"]
-
-def delete_result(dataset_name):
-    result = load_result()
-    del_key = []
-    for k, v in result.items():
-        dataset, error, file, model, seed = k.split('/')
-        if dataset == dataset_name:
-            del_key.append(k)
-    for k in del_key:
-        print("delete {}".format(k))
-        del result[k]
-    json.dump(result, open('./result.json', 'w'))
 
 def dict_to_df(dic, row_keys_idx, col_keys_idx):
     """ Convert dict to data frame
@@ -284,7 +279,7 @@ def remove(path):
         shutil.rmtree(path)
 
 def check_completed(dataset, split_seed, experiment_seed):
-    result = load_result()
+    result = load_result(dataset['data_dir'])
     np.random.seed(experiment_seed)
     seeds = np.random.randint(10000, size=config.n_retrain)
     for error in dataset['error_types']:

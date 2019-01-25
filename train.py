@@ -91,7 +91,10 @@ def get_fine_grid(model, best_param_coarse, n_jobs):
 def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
     np.random.seed(seed)
     coarse_param_seed, coarse_train_seed, fine_train_seed = np.random.randint(1000, size=3)
-    estimator = model["estimator"]
+    fixed_params = model["fixed_params"]
+    if "parallelable" in model.keys() and model['parallelable']:
+        fixed_params["n_jobs"] = n_jobs
+    estimator = model["fn"](**fixed_params)
 
     # hyperparameter search
     if "params" not in model.keys():

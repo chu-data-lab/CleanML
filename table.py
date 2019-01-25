@@ -9,6 +9,7 @@ import config
 import os
 from matplotlib import pyplot as plt
 
+
 def group(result, idx):
     """ Combine result from different experiments into a list
 
@@ -118,12 +119,29 @@ def compare_four_metrics(four_metrics, file_types, compare_method):
     comparison = utils.dict_to_df(comparison, [0, 1], [2])
     return comparison
 
-def t_test(a, b):
-    n_a = len(a)
-    n_b = len(b)
-    n = min(n_a, n_b)
-    t, p = ttest_rel(a[:n], b[:n])
+def two_tailed_t_test(dirty, clean):
+    n_d = len(dirty)
+    n_c = len(clean)
+    n = min(n_d, n_c)
+    t, p = ttest_rel(clean[:n], dirty[:n])
     return (t, p)
+
+def one_tailed_t_test(dirty, clean, direction):
+    t, p_two = two_tailed_t_test(dirty, clean)
+    if direction = 'positive':
+        if t > 0 :
+            p = p_two * 0.5
+        else:
+            p = 1 - p_two * 0.5
+    if direction = 'negative':
+        if t < 0:
+            p = p_two * 0.5
+        else:
+            p = 1 - p_two * 0.5
+    return (t, p)
+
+def BY_procedure():
+
 
 def compare_dup_incon(result, error, compare_method):
     """ Comparison for duplicates and inconsistency
@@ -197,21 +215,22 @@ if __name__ == '__main__':
     result = utils.load_result()
     result = group(result, 5)
     result = reduce_by_mean(result)
-    # mv_comp, mv_metrics = compare_mv(result, t_test)
+
+    mv_comp, mv_metrics = compare_mv(result, t_test)
     out_comp, out_metrics = compare_out(result, t_test)
-    # ml_comp,  ml_metrics = compare_mislabel(result, t_test)
-    # dup_comp, dup_metrics = compare_dup_incon(result, "duplicates", t_test)
-    # incon_comp, incon_metrics = compare_dup_incon(result, "inconsistency")
-    # save_dfs(mv_comp, "./table/t_test/missing_values.xls")
-    save_dfs(out_comp, "./table/t_test/outliers.xls")
-    # save_dfs(ml_comp, "./table/t_test/mislabel.xls")
-    # save_dfs(dup_comp, "./table/t_test/duplicates.xls")
+    ml_comp,  ml_metrics = compare_mislabel(result, t_test)
+    dup_comp, dup_metrics = compare_dup_incon(result, "duplicates", t_test)
+    # incon_comp, incon_metrics = compare_dup_incon(result, "inconsistency", t_test)
 
-    # save_dfs(mv_metrics, "./table/four_metrics/missing_values.xls")
-    save_dfs(out_metrics, "./table/four_metrics/outliers.xls")
-    # save_dfs(ml_metrics, "./table/four_metrics/mislabel.xls")
-    # save_dfs(dup_metrics, "./table/four_metrics/duplicates.xls")
+    save_dfs(mv_comp, "./table/t_test/missing_values_t_test.xls")
+    save_dfs(out_comp, "./table/t_test/outliers_t_test.xls")
+    save_dfs(ml_comp, "./table/t_test/mislabel_t_test.xls")
+    save_dfs(dup_comp, "./table/t_test/duplicates_t_test.xls")
 
+    save_dfs(mv_metrics, "./table/four_metrics/missing_values_four_metrics.xls")
+    save_dfs(out_metrics, "./table/four_metrics/outliers_four_metrics.xls")
+    save_dfs(ml_metrics, "./table/four_metrics/mislabel_four_metrics.xls")
+    save_dfs(dup_metrics, "./table/four_metrics/duplicates_four_metrics.xls")
     # save_comparisons(incon, "./table/t_test/inconsistency")
 
     # four_metrics = get_four_metrics(result, 'missing_values', ['delete', 'impute_mean_mode'])

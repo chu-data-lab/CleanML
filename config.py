@@ -20,8 +20,7 @@ root_seed = 1
 n_resplit = 20
 n_retrain = 5
 test_ratio = 0.3
-max_size = 10000
-n_cpu = 24
+max_size = 1000
 
 # datasets
 KDD = {
@@ -144,31 +143,33 @@ datasets = [KDD, Credit, Airbnb, USCensus, EGG, Titanic, Marketing, Sensor, Movi
 logistic_reg = {
     "name": "logistic_regression",
     "fn": LogisticRegression,
-    "estimator": LogisticRegression(solver="lbfgs", max_iter=5000, multi_class='auto', n_jobs=n_cpu),
+    "fixed_params": {"solver":"lbfgs", "max_iter":5000, "multi_class":'auto'},
+    "parallelable": True,
     "type": "classification",
-    "params": "C" ,
-    "params_type": "real",
-    "params_range": [-5, 5]
+    "hyperparams": "C" ,
+    "hyperparams_type": "real",
+    "hyperparams_range": [-5, 5]
 }
 
 knn_clf = {
     "name": "knn_classification",
     "fn": KNeighborsClassifier,
-    "estimator": KNeighborsClassifier(n_jobs=n_cpu),
+    "fixed_params":{},
+    "parallelable": True,
     "type": "classification",
-    "params": "n_neighbors",
-    "params_type": "int",
-    "params_range": [1, 95]
+    "hyperparams": "n_neighbors",
+    "hyperparams_type": "int",
+    "hyperparams_range": [1, 95]
 }
 
 dt_clf = {
     "name": "decision_tree_classification",
     "fn": DecisionTreeClassifier,
-    "estimator": DecisionTreeClassifier(),
+    "fixed_params": {},
     "type": "classification",
-    "params": "max_depth",
-    "params_type": "int",
-    "params_range": [1, 200]
+    "hyperparams": "max_depth",
+    "hyperparams_type": "int",
+    "hyperparams_range": [1, 200]
 }
 
 linear_svm = {
@@ -177,35 +178,36 @@ linear_svm = {
     # "estimator": LinearSVC(max_iter=5000),
     "estimator": SVC(kernel='linear'),
     "type": "classification",
-    "params": "C",
-    "params_type": "real",
-    "params_range": [-5, 5]
+    "hyperparams": "C",
+    "hyperparams_type": "real",
+    "hyperparams_range": [-5, 5]
 }
 
 adaboost_clf = {
     "name": "adaboost_classification",
     "fn": AdaBoostClassifier,
-    "estimator": AdaBoostClassifier(n_estimators=200),
+    "fixed_params": {"n_estimators":200},
     "type": "classification",
-    "params": "learning_rate",
-    "params_type": "real",
-    "params_range": [-9, 1]
+    "hyperparams": "learning_rate",
+    "hyperparams_type": "real",
+    "hyperparams_range": [-9, 1]
 }
 
 random_forest_clf = {
     "name": "random_forest_classification",
     "fn": RandomForestClassifier,
-    "estimator": RandomForestClassifier(n_estimators=100, n_jobs=n_cpu),
+    "fixed_params": {"n_estimators":100},
+    "parallelable": True,
     "type": "classification",
-    "params": "max_depth",
-    "params_type": "int",
-    "params_range": [1, 200]
+    "hyperparams": "max_depth",
+    "hyperparams_type": "int",
+    "hyperparams_range": [1, 200]
 }
 
 gaussian_nb = {
     "name": "guassian_naive_bayes",
     "fn": GaussianNB,
-    "estimator": GaussianNB(),
+    "fixed_params": {},
     "type": "classification"
 }
 

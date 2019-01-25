@@ -144,7 +144,7 @@ datasets = [KDD, Credit, Airbnb, USCensus, EGG, Titanic, Marketing, Sensor, Movi
 logistic_reg = {
     "name": "logistic_regression",
     "fn": LogisticRegression,
-    "estimator": LogisticRegression(solver="liblinear", max_iter=5000, multi_class='auto', n_jobs=n_cpu),
+    "estimator": LogisticRegression(solver="lbfgs", max_iter=5000, multi_class='auto', n_jobs=n_cpu),
     "type": "classification",
     "params": "C" ,
     "params_type": "real",

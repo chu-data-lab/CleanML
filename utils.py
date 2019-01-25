@@ -119,6 +119,8 @@ def save_result(dataset_name, key, res):
     result = load_result(dataset_name)
     result[key] = res
     result_path = os.path.join(config.result_dir, '{}_result.json'.format(dataset_name))
+    if not os.path.exists(config.result_dir):
+        os.makedirs(config.result_dir)
     json.dump(result, open(result_path, 'w'))
 
 def save_result_list(dataset_name, key_list, res_list):
@@ -126,6 +128,8 @@ def save_result_list(dataset_name, key_list, res_list):
     for key, res in zip(key_list, res_list):
         result[key] = res
     result_path = os.path.join(config.result_dir, '{}_result.json'.format(dataset_name))
+    if not os.path.exists(config.result_dir):
+        os.makedirs(config.result_dir)
     json.dump(result, open(result_path, 'w'))
     
 def get_model(model_name):

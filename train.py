@@ -68,7 +68,7 @@ def evaluate(best_model, X_test_list, y_test_list, test_files):
             result[file + "_test_f1"] = test_f1  
     return result
 
-def get_coarse_grid(model, seed):
+def get_coarse_grid(model, seed, n_jobs):
     """ Get hyper parameters (coarse random search) """
     np.random.seed(seed)
     low, high = model["params_range"]
@@ -78,7 +78,7 @@ def get_coarse_grid(model, seed):
         param_grid = {model['params']: np.random.randint(low, high, 20)}
     return param_grid
 
-def get_fine_grid(model, best_param_coarse):
+def get_fine_grid(model, best_param_coarse, n_jobs):
     """ Get hyper parameters (fine grid search, around the best parameter in coarse search) """
     if model["params_type"] == "real":
         base = np.log10(best_param_coarse)
@@ -99,13 +99,13 @@ def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
         best_model, result = train(X_train, y_train, estimator, None, n_jobs=n_jobs, seed=coarse_train_seed)
     else:
         # coarse random search
-        param_grid = get_coarse_grid(model, coarse_param_seed)
+        param_grid = get_coarse_grid(model, coarse_param_seed, n_jobs)
         best_model_coarse, result_coarse = train(X_train, y_train, estimator, param_grid, n_jobs=n_jobs, seed=coarse_train_seed)
         val_acc_coarse = result_coarse['val_acc']
         
         # fine grid search
         best_param_coarse = result_coarse['best_params'][model['params']]
-        param_grid = get_fine_grid(model, best_param_coarse)
+        param_grid = get_fine_grid(model, best_param_coarse, n_jobs)
         best_model_fine, result_fine = train(X_train, y_train, estimator, param_grid, n_jobs=n_jobs, seed=fine_train_seed)
         val_acc_fine = result_fine['val_acc']
 
@@ -118,7 +118,7 @@ def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
 
         # convert int to float to avoid json error
         if model["params_type"] == "int":
-                result['best_params'][model['params']] *= 1.0
+            result['best_params'][model['params']] *= 1.0
 
     return best_model, result
 

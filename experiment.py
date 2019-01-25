@@ -46,8 +46,8 @@ def experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
     result = utils.load_result(dataset['data_dir'])
 
     # run experiments
-    for error in dataset["error_types"]:
-        for train_file in utils.get_train_files(error):
+    for error in dataset["error_types"][0:1]:
+        for train_file in utils.get_train_files(error)[0:1]:
             for model in config.models:
                 for seed in seeds:
                     version = utils.get_version(utils.get_dir(dataset, error, train_file))

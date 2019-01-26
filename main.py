@@ -22,7 +22,8 @@ args = parser.parse_args()
 
 if args.log:
     logging.captureWarnings(True)
-    logging.basicConfig(filename='logging_{}.log'.format(datetime.datetime.now()),level=logging.DEBUG)
+    logging_path = 'logging_{}.txt'.format(datetime.datetime.now())
+    logging.basicConfig(filename='logging_{}.log'.format(datetime.datetime.now()), level=logging.DEBUG)
 
 if __name__ == '__main__':
     np.random.seed(config.root_seed)
@@ -32,15 +33,20 @@ if __name__ == '__main__':
     
     for dataset in datasets:
         logging.debug("Experiment on {}".format(dataset['data_dir']))
+        if args.log:
+            with open(logging_path, 'w') as f:
+                f.write("Experiment on {}\n".format(dataset['data_dir']))
+
         for i, seed in enumerate(split_seeds):
             if utils.check_completed(dataset, seed, experiment_seed):
                 print("Ignore {}-th experiment on {} that has been completed before.".format(i, dataset['data_dir']))
                 continue
             tic = time.time()
-            if "class_imbalance" in dataset.keys() and dataset["class_imbalance"]:
-                init(dataset, seed=seed, max_size=config.max_size*10)
-            else:
-                init(dataset, seed=seed, max_size=config.max_size)
+            # if "class_imbalance" in dataset.keys() and dataset["class_imbalance"]:
+            #     init(dataset, seed=seed, max_size=config.max_size*10)
+            # else:
+            
+            init(dataset, seed=seed, max_size=config.max_size)
             clean(dataset)
             if args.parallel:
                 experiment_parallel(dataset, n_retrain=config.n_retrain, n_jobs=args.cpu, nosave=args.nosave, seed=experiment_seed)
@@ -50,3 +56,6 @@ if __name__ == '__main__':
             t = (toc - tic) / 60
             remaining = t*(len(split_seeds)-i-1) 
             logging.debug("{}-th experiment takes {} min. Estimated remaining time: {} min".format(i, t, remaining))
+            if args.log:
+                with open(logging_path, 'w') as f:
+                    f.write("{}-th experiment takes {} min. Estimated remaining time: {} min\n".format(i, t, remaining))

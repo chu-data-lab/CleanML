@@ -20,7 +20,7 @@ root_seed = 1
 n_resplit = 20
 n_retrain = 5
 test_ratio = 0.3
-max_size = 10000
+max_size = None
 
 # datasets
 KDD = {

@@ -22,7 +22,6 @@ args = parser.parse_args()
 
 if args.log:
     logging.captureWarnings(True)
-    logging_path = 'logging_{}.txt'.format(datetime.datetime.now())
     logging.basicConfig(filename='logging_{}.log'.format(datetime.datetime.now()), level=logging.DEBUG)
 
 if __name__ == '__main__':
@@ -32,10 +31,7 @@ if __name__ == '__main__':
     datasets = [utils.get_dataset(args.dataset)] if args.dataset is not None else config.datasets
     
     for dataset in datasets:
-        logging.debug("Experiment on {}".format(dataset['data_dir']))
-        if args.log:
-            with open(logging_path, 'w') as f:
-                f.write("Experiment on {}\n".format(dataset['data_dir']))
+        logging.debug("{}: Experiment on {}".format(datetime.datetime.now(), dataset['data_dir']))
 
         for i, seed in enumerate(split_seeds):
             if utils.check_completed(dataset, seed, experiment_seed):
@@ -55,7 +51,4 @@ if __name__ == '__main__':
             toc = time.time()
             t = (toc - tic) / 60
             remaining = t*(len(split_seeds)-i-1) 
-            logging.debug("{}-th experiment takes {} min. Estimated remaining time: {} min".format(i, t, remaining))
-            if args.log:
-                with open(logging_path, 'w') as f:
-                    f.write("{}-th experiment takes {} min. Estimated remaining time: {} min\n".format(i, t, remaining))
+            logging.debug("{}: {}-th experiment takes {} min. Estimated remaining time: {} min".format(datetime.datetime.now(), i, t, remaining))

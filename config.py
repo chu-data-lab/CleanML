@@ -176,7 +176,7 @@ linear_svm = {
     "name": "linear_svm",
     "fn": LinearSVC,
     # "estimator": LinearSVC(max_iter=5000),
-    "estimator": SVC(kernel='linear'),
+    "fixed_params": {"max_iter": 10000},
     "type": "classification",
     "hyperparams": "C",
     "hyperparams_type": "real",

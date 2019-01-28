@@ -71,21 +71,21 @@ def evaluate(best_model, X_test_list, y_test_list, test_files):
 def get_coarse_grid(model, seed, n_jobs):
     """ Get hyper parameters (coarse random search) """
     np.random.seed(seed)
-    low, high = model["params_range"]
-    if model["params_type"] == "real":
-        param_grid = {model['params']: 10 ** np.random.uniform(low, high, 20)}
-    if model["params_type"] == "int":
-        param_grid = {model['params']: np.random.randint(low, high, 20)}
+    low, high = model["hyperparams_range"]
+    if model["hyperparams_type"] == "real":
+        param_grid = {model['hyperparams']: 10 ** np.random.uniform(low, high, 20)}
+    if model["hyperparams_type"] == "int":
+        param_grid = {model['hyperparams']: np.random.randint(low, high, 20)}
     return param_grid
 
 def get_fine_grid(model, best_param_coarse, n_jobs):
     """ Get hyper parameters (fine grid search, around the best parameter in coarse search) """
-    if model["params_type"] == "real":
+    if model["hyperparams_type"] == "real":
         base = np.log10(best_param_coarse)
-        param_grid = {model['params']: np.linspace(10**(base-0.5), 10**(base+0.5), 20)}
-    if model["params_type"] == "int":
+        param_grid = {model['hyperparams']: np.linspace(10**(base-0.5), 10**(base+0.5), 20)}
+    if model["hyperparams_type"] == "int":
         low = max(best_param_coarse - 10, 1)
-        param_grid = {model['params']: np.arange(low, low + 20)}
+        param_grid = {model['hyperparams']: np.arange(low, low + 20)}
     return param_grid
 
 def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
@@ -97,7 +97,7 @@ def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
     estimator = model["fn"](**fixed_params)
 
     # hyperparameter search
-    if "params" not in model.keys():
+    if "hyperparams" not in model.keys():
         # if no hyper parmeter, train directly
         best_model, result = train(X_train, y_train, estimator, None, n_jobs=n_jobs, seed=coarse_train_seed)
     else:
@@ -120,8 +120,8 @@ def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
             best_model = best_model_coarse
 
         # convert int to float to avoid json error
-        if model["params_type"] == "int":
-            result['best_params'][model['params']] *= 1.0
+        if model["hyperparams_type"] == "int":
+            result['best_params'][model["hyperparams"]] *= 1.0
 
     return best_model, result
 

@@ -107,7 +107,7 @@ def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
         val_acc_coarse = result_coarse['val_acc']
         
         # fine grid search
-        best_param_coarse = result_coarse['best_params'][model['params']]
+        best_param_coarse = result_coarse['best_params'][model['hyperparams']]
         param_grid = get_fine_grid(model, best_param_coarse, n_jobs)
         best_model_fine, result_fine = train(X_train, y_train, estimator, param_grid, n_jobs=n_jobs, seed=fine_train_seed)
         val_acc_fine = result_fine['val_acc']

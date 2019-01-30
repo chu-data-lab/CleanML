@@ -137,7 +137,15 @@ Company = {
     "drop_variables": ["Date", "Unnamed: 0", "City"]
 }
 
-datasets = [KDD, Credit, Airbnb, USCensus, EGG, Titanic, Marketing, Sensor, Movie, Restaurant, Citation, Company]
+University = {
+    "data_dir": "University",
+    "error_types": ["inconsistency"],
+    "label": "expenses thous$",
+    "ml_task": "classification",
+    "drop_variables": ["university name", "academic-emphasis"]
+}
+
+datasets = [KDD, Credit, Airbnb, USCensus, EGG, Titanic, Marketing, Sensor, Movie, Restaurant, Citation, Company, University]
 
 # models
 logistic_reg = {
@@ -174,9 +182,10 @@ dt_clf = {
 
 linear_svm = {
     "name": "linear_svm",
-    "fn": LinearSVC,
+    # "fn": LinearSVC,
     # "estimator": LinearSVC(max_iter=5000),
-    "fixed_params": {"max_iter": 10000},
+    "fn": SVC,
+    "fixed_params": {"kernel":"linear", "cache_size":7000},
     "type": "classification",
     "hyperparams": "C",
     "hyperparams_type": "real",
@@ -211,4 +220,4 @@ gaussian_nb = {
     "type": "classification"
 }
 
-models = [logistic_reg, knn_clf, dt_clf, adaboost_clf, random_forest_clf, gaussian_nb]
+models = [logistic_reg, knn_clf, dt_clf, adaboost_clf, random_forest_clf, gaussian_nb, linear_svm]

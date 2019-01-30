@@ -20,7 +20,7 @@ root_seed = 1
 n_resplit = 20
 n_retrain = 5
 test_ratio = 0.3
-max_size = None
+max_size = 15000
 
 # datasets
 KDD = {
@@ -182,8 +182,6 @@ dt_clf = {
 
 linear_svm = {
     "name": "linear_svm",
-    # "fn": LinearSVC,
-    # "estimator": LinearSVC(max_iter=5000),
     "fn": SVC,
     "fixed_params": {"kernel":"linear", "cache_size":7000},
     "type": "classification",

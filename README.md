@@ -15,7 +15,7 @@ Options:
 --cpu: specify the number of cpu used for experiment. Default is 1.
 
 Output:
-The experimental results for each dataset will be saved in /result directory as a json file named as \<dataset name\>\_result.json. Each result is a key-value pair. The key is "<dataset>/<split seed>/<error_type>/<training set>/<ML model>/<experiment seed>. The value is a set of key-value pairs.
+The experimental results for each dataset will be saved in /result directory as a json file named as \<dataset name\>\_result.json. Each result is a key-value pair. The key is a string in format "\<dataset\>/\<split seed\>/\<error_type\>/\<training set\>/\<ML model\>/\<experiment seed\>". The value is a set of key-value pairs for each evaluation metric and result.
 
 To compare the results and perform hypothesis test, execute the following command from the project home directory:
 

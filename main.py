@@ -1,6 +1,5 @@
 from init import init
 from experiment import experiment
-from experiment_parallel import experiment_parallel
 from clean import clean
 import numpy as np
 import utils
@@ -16,7 +15,6 @@ parser.add_argument('--cpu', default=1, type=int)
 parser.add_argument('--log', default=False, action='store_true')
 parser.add_argument('--nosave', default=False, action='store_true')
 parser.add_argument('--dataset', default=None)
-parser.add_argument('--parallel', default=False, action='store_true')
 
 args = parser.parse_args()
 
@@ -44,10 +42,7 @@ if __name__ == '__main__':
             
             init(dataset, seed=seed, max_size=config.max_size)
             clean(dataset)
-            if args.parallel:
-                experiment_parallel(dataset, n_retrain=config.n_retrain, n_jobs=args.cpu, nosave=args.nosave, seed=experiment_seed)
-            else:
-                experiment(dataset, n_retrain=config.n_retrain, n_jobs=args.cpu, nosave=args.nosave, seed=experiment_seed)
+            experiment(dataset, n_retrain=config.n_retrain, n_jobs=args.cpu, nosave=args.nosave, seed=experiment_seed)
             toc = time.time()
             t = (toc - tic) / 60
             remaining = t*(len(split_seeds)-i-1) 

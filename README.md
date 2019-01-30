@@ -10,7 +10,7 @@ python main.py [--dataset <name>] [--cpu <num_cpu>]
 ```
 
 #### Options:
---dataset: specify the experiment dataset. If not specified, the program will run experiments on all datasets.
+--dataset: specify the experiment dataset. If not specified, the program will run experiments on all datasets.<br>
 --cpu: specify the number of cpu used for experiment. Default is 1.
 
 #### Output:

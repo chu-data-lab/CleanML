@@ -76,7 +76,7 @@ def get_coarse_grid(model, seed, n_jobs, N):
         param_grid = {model['hyperparams']: 10 ** np.random.uniform(low, high, 20)}
     if model["hyperparams_type"] == "int":
         if model["name"] == "knn_classification":
-            high = min(high, N)
+            high = min(high, int(N/5*4))
         param_grid = {model['hyperparams']: np.random.randint(low, high, 20)}
     return param_grid
 
@@ -89,7 +89,7 @@ def get_fine_grid(model, best_param_coarse, n_jobs, N):
         low = max(best_param_coarse - 10, 1)
         high = low + 20
         if model["name"] == "knn_classification":
-            high = min(high, N)
+            high = min(high, int(N/5*4))
         param_grid = {model['hyperparams']: np.arange(low, high)}
     return param_grid
 

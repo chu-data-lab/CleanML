@@ -68,24 +68,29 @@ def evaluate(best_model, X_test_list, y_test_list, test_files):
             result[file + "_test_f1"] = test_f1  
     return result
 
-def get_coarse_grid(model, seed, n_jobs):
+def get_coarse_grid(model, seed, n_jobs, N):
     """ Get hyper parameters (coarse random search) """
     np.random.seed(seed)
     low, high = model["hyperparams_range"]
     if model["hyperparams_type"] == "real":
         param_grid = {model['hyperparams']: 10 ** np.random.uniform(low, high, 20)}
     if model["hyperparams_type"] == "int":
+        if model["name"] == "knn_classification":
+            high = min(high, N)
         param_grid = {model['hyperparams']: np.random.randint(low, high, 20)}
     return param_grid
 
-def get_fine_grid(model, best_param_coarse, n_jobs):
+def get_fine_grid(model, best_param_coarse, n_jobs, N):
     """ Get hyper parameters (fine grid search, around the best parameter in coarse search) """
     if model["hyperparams_type"] == "real":
         base = np.log10(best_param_coarse)
         param_grid = {model['hyperparams']: np.linspace(10**(base-0.5), 10**(base+0.5), 20)}
     if model["hyperparams_type"] == "int":
         low = max(best_param_coarse - 10, 1)
-        param_grid = {model['hyperparams']: np.arange(low, low + 20)}
+        high = low + 20
+        if model["name"] == "knn_classification":
+            high = min(high, N)
+        param_grid = {model['hyperparams']: np.arange(low, high)}
     return param_grid
 
 def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
@@ -102,13 +107,13 @@ def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
         best_model, result = train(X_train, y_train, estimator, None, n_jobs=n_jobs, seed=coarse_train_seed)
     else:
         # coarse random search
-        param_grid = get_coarse_grid(model, coarse_param_seed, n_jobs)
+        param_grid = get_coarse_grid(model, coarse_param_seed, n_jobs, len(y_train))
         best_model_coarse, result_coarse = train(X_train, y_train, estimator, param_grid, n_jobs=n_jobs, seed=coarse_train_seed)
         val_acc_coarse = result_coarse['val_acc']
         
         # fine grid search
         best_param_coarse = result_coarse['best_params'][model['hyperparams']]
-        param_grid = get_fine_grid(model, best_param_coarse, n_jobs)
+        param_grid = get_fine_grid(model, best_param_coarse, n_jobs, len(y_train))
         best_model_fine, result_fine = train(X_train, y_train, estimator, param_grid, n_jobs=n_jobs, seed=fine_train_seed)
         val_acc_fine = result_fine['val_acc']
 

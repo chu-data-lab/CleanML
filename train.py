@@ -58,9 +58,10 @@ def evaluate(best_model, X_test_list, y_test_list, test_files):
     # evaluate on test sets
     result = {}
     for X_test, y_test, file in zip(X_test_list, y_test_list, test_files):
-        test_acc = best_model.score(X_test, y_test)
-        result[file + "_test_acc"] = test_acc
         y_pred = best_model.predict(X_test)
+        test_acc = np.mean(y_pred == y_test)
+        result[file + "_test_acc"] = test_acc
+
         if len(set(y_test)) > 2:
             test_f1 = f1_score(y_test, y_pred, average='macro')
         else:

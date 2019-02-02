@@ -218,4 +218,4 @@ gaussian_nb = {
     "type": "classification"
 }
 
-models = [logistic_reg, knn_clf, dt_clf, adaboost_clf, random_forest_clf, gaussian_nb, linear_svm]
+models = [logistic_reg, knn_clf, dt_clf, adaboost_clf, random_forest_clf, gaussian_nb]

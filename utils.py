@@ -292,7 +292,6 @@ def check_completed(dataset, split_seed, experiment_seed):
                 for s in seeds:
                     key = "{}/v{}/{}/{}/{}/{}".format(dataset['data_dir'], split_seed, error, train_file, model['name'], s)
                     if key not in result.keys():
-                        print(key)
                         return False
     return True
 

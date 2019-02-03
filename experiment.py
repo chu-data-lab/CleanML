@@ -5,6 +5,7 @@ import utils
 import json
 import argparse
 import config
+import datetime
 
 def one_experiment(dataset, error_type, train_file, model, seed, n_jobs=1):
     """ One experiment on the datase given an error type, a train file, a model and a seed
@@ -57,7 +58,7 @@ def experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
                         print("Ignore experiment {} that has been completed before.".format(key))
                         continue
         
-                    print("Processing {}".format(key)) 
+                    print("{} Processing {}".format(datetime.datetime.now(), key)) 
                     res = one_experiment(dataset, error, train_file, model, seed, n_jobs=n_jobs)
                     if not nosave:
                         utils.save_result(dataset['data_dir'], key, res)

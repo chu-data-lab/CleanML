@@ -9,6 +9,7 @@ import config
 import os
 from matplotlib import pyplot as plt
 from statsmodels.stats.multitest import multipletests
+import json
 
 def group(result, idx):
     """ Combine result from different experiments into a list
@@ -105,6 +106,7 @@ def compare_four_metrics(four_metrics, file_types, compare_method):
     AC = lambda m: compare_method(A(m), C(m))
     CD = lambda m: compare_method(C(m), D(m))
     BD = lambda m: compare_method(B(m), D(m))
+    AD = lambda m: compare_method(A(m), D(m))
 
     comparison = {}
     datasets = list(set(four_metrics.index.get_level_values(0)))
@@ -116,6 +118,7 @@ def compare_four_metrics(four_metrics, file_types, compare_method):
             comparison[(dataset, model, "CD")] = CD(m)
             comparison[(dataset, model, "AC")] = AC(m)
             comparison[(dataset, model, "BD")] = BD(m)
+            comparison[(dataset, model, "AD")] = AD(m)
 
     # comparison = utils.dict_to_df(comparison, [0, 1], [2])
     return comparison
@@ -229,15 +232,15 @@ def save_t_test(t_test_results, save_dir, two_tailed_reject, one_tailed_pos_reje
     worksheet = writer.sheets['t-test']
     cell_format = workbook.add_format({'bold': True, 'font_color': 'red'})
 
-    for i, r in enumerate(two_tailed_reject):
+    for i, r in enumerate(two_tailed_reject.values):
         if r:
             p = t_test_results.loc[:, ("two_tailed_t_test", 'p-value')][i]
             worksheet.write(3 + i, 6, p, cell_format)
-    for i, r in enumerate(one_tailed_pos_reject):
+    for i, r in enumerate(one_tailed_pos_reject.values):
         if r:
             p = t_test_results.loc[:, ("one_tailed_t_test_pos", 'p-value')][i]
             worksheet.write(3 + i, 8, p, cell_format)
-    for i, r in enumerate(one_tailed_neg_reject):
+    for i, r in enumerate(one_tailed_neg_reject.values):
         if r:
             p = t_test_results.loc[:, ("one_tailed_t_test_neg", 'p-value')][i]
             worksheet.write(3 + i, 10, p, cell_format)
@@ -266,16 +269,6 @@ def BY_procedure(t_test_results, test_type, alpha=0.05):
     reject_df = pd.DataFrame(reject, index=p_vals.index, columns=['reject'])
     a = p_vals.values[reject].max()
     return reject_df, a
-
-# def count_metrics(reject):
-#     cases = ["AB", "CD", "AC", "BD"]
-#     idx = pd.IndexSlice
-#     count = {}
-
-#     for c in cases:
-#         reject_c = reject.loc[idx[:,:,:,:,c], :].values
-#         count[c] = "{}/{}".format(np.sum(reject_c), len(reject_c))
-#     return count
 
 def count_reject_one_dim(reject, index):
     cases = reject.index.get_level_values(index)
@@ -326,7 +319,7 @@ def count_reject_error(rejects, writer, error):
         result.to_excel(writer, sheet_name=error, startrow=row, startcol=0) 
         row += 10
 
-def conduct_t_test(result, save_metrics=False):
+def run_t_test(result, save_metrics=False):
     t_test_results = {}
     mv_comp, mv_metrics = compare_mv(result, t_test)
     out_comp, out_metrics = compare_out(result, t_test)
@@ -351,24 +344,44 @@ def conduct_t_test(result, save_metrics=False):
         save_dfs(incon_metrics, "./table/four_metrics/inconsistency_four_metrics.xls")
     return t_test_results
 
+def result_to_table():
+    save_dir = os.path.join(config.table_dir, 'training_result')
+    result_files = [file for file in os.listdir(config.result_dir) if file.endswith('result.json')]
+    for file in result_files:
+        file_name = file.split('.')[0]
+        result_path = os.path.join(config.result_dir, file)
+        result = json.load(open(result_path, 'r'))
+        result_dict = {}
+        for k, v in result.items():
+            new_k = tuple(k.split('/'))
+            new_v = {vk: vv for vk, vv in v.items() if vk != "best_params"}
+            result_dict[new_k] = new_v
+        result_dict = flatten_dict(result_dict)
+        save_path = os.path.join(save_dir, file_name+'.xlsx')
+        result_df = utils.dict_to_xls(result_dict, [1, 2, 3, 4, 5], [6], save_path)
 
 if __name__ == '__main__':
-    # result = utils.load_result()
-    # result = group(result, 5)
-    # result = reduce_by_mean(result)
-    # t_test_results = conduct_t_test(result)
+    result_to_table()
 
-    # two_tailed_reject, two_tailed_a = BY_procedure(t_test_results, 'two_tailed_t_test')
-    # one_tailed_pos_reject, one_tailed_pos_a = BY_procedure(t_test_results, 'one_tailed_t_test_pos')
-    # one_tailed_neg_reject, one_tailed_neg_a  = BY_procedure(t_test_results, 'one_tailed_t_test_neg')
+    result = utils.load_result()
+    result = group(result, 5)
+    result = reduce_by_mean(result)
+    t_test_results = run_t_test(result, True)    
+
+    two_tailed_reject, two_tailed_a = BY_procedure(t_test_results, 'two_tailed_t_test')
+    one_tailed_pos_reject, one_tailed_pos_a = BY_procedure(t_test_results, 'one_tailed_t_test_pos')
+    one_tailed_neg_reject, one_tailed_neg_a  = BY_procedure(t_test_results, 'one_tailed_t_test_neg')
+
+    save_t_test(t_test_results, "./table/t_test/t_test_results.xlsx", two_tailed_reject, one_tailed_pos_reject, one_tailed_neg_reject)
+
     # print(two_tailed_a, one_tailed_pos_a, one_tailed_neg_a)
     # two_tailed_reject.to_pickle('./table/t_test/two_tailed_reject.pkl')
     # one_tailed_pos_reject.to_pickle('./table/t_test/one_tailed_pos_reject.pkl')
     # one_tailed_neg_reject.to_pickle('./table/t_test/one_tailed_neg_reject.pkl')
 
-    two_tailed_reject = pd.read_pickle('./table/t_test/two_tailed_reject.pkl')
-    one_tailed_pos_reject = pd.read_pickle('./table/t_test/one_tailed_pos_reject.pkl')
-    one_tailed_neg_reject = pd.read_pickle('./table/t_test/one_tailed_neg_reject.pkl')
+    # two_tailed_reject = pd.read_pickle('./table/t_test/two_tailed_reject.pkl')
+    # one_tailed_pos_reject = pd.read_pickle('./table/t_test/one_tailed_pos_reject.pkl')
+    # one_tailed_neg_reject = pd.read_pickle('./table/t_test/one_tailed_neg_reject.pkl')
 
     rejects = {"two_tailed": two_tailed_reject, "one_tailed_pos": one_tailed_pos_reject, "one_tailed_neg": one_tailed_neg_reject}
     writer = pd.ExcelWriter('./table/t_test/count.xlsx',engine='xlsxwriter')   
@@ -378,22 +391,17 @@ if __name__ == '__main__':
     writer.sheets['general'] = worksheet
     count_reject_general(rejects, writer)
 
-    for error in ['missing_values', 'outliers', 'mislabel']:
+    for error in ['missing_values', 'outliers', 'mislabel', 'inconsistency', 'duplicates']:
         worksheet = workbook.add_worksheet(error)
         writer.sheets[error] = worksheet
         idx = pd.IndexSlice
         count_reject_error(rejects, writer, error)
 
     writer.save()
-   
 
-    # print(AB.shape)
-    # print(np.sum(two_tailed_reject), np.sum(one_tailed_pos_reject), np.sum(one_tailed_neg_reject))
     
 
 
-    # save_t_test(t_test_results, "./table/t_test/t_test_results.xlsx", two_tailed_reject, one_tailed_pos_reject, one_tailed_neg_reject)
-    
 
 
 

@@ -9,7 +9,7 @@ import pandas as pd
 import utils
 
 def check_version(dataset, error_type, train_file):
-    """ Check whether train and test are of the same version"""
+    """Check whether train and test are of the same version"""
     train_path_pfx = utils.get_dir(dataset, error_type, train_file)
     train_version = utils.get_version(train_path_pfx)
     test_files = utils.get_test_files(error_type, train_file)
@@ -19,12 +19,12 @@ def check_version(dataset, error_type, train_file):
         assert(train_version == test_version)
         
 def load_data(dataset, train_path, test_path_list):
-    """ Load and split data into features and label.
+    """Load and split data into features and label.
 
-        Args: 
-            dataset (dict): dataset dict in config
-            train_path (string): path for training set
-            test_path_list (list): a list of paths for test set (missing values and outlier have multiple test sets)
+    Args: 
+        dataset (dict): dataset dict in config
+        train_path (string): path for training set
+        test_path_list (list): a list of paths for test set (missing values and outlier have multiple test sets)
     """
     # load data 
     train = utils.load_df(dataset, train_path)
@@ -40,7 +40,7 @@ def load_data(dataset, train_path, test_path_list):
     return X_train, y_train, X_test_list, y_test_list  
 
 def drop_variables(X_train, X_test_list, drop_columns):
-    """ Drop irrelavant features"""
+    """Drop irrelavant features"""
     n_test_files = len(X_test_list)
     X_train.drop(columns=drop_columns, inplace=True)
     for i in range(n_test_files):
@@ -112,13 +112,14 @@ def encode_cat_features(X_train, X_test_list):
     return X_train, X_test_list
 
 def preprocess(dataset, error_type, train_file, normalize=True, down_sample_seed=1):
-    """ Load and preprocess data
-        Args:
-            dataset (dict): dataset dict in config
-            error_type (string): error type
-            train_file (string): prefix of file of training set
-            normalize (bool): whehter to standarize the data
-            down_sample_seed: seed for down sampling
+    """Load and preprocess data
+
+    Args:
+        dataset (dict): dataset dict in config
+        error_type (string): error type
+        train_file (string): prefix of file of training set
+        normalize (bool): whehter to standarize the data
+        down_sample_seed: seed for down sampling
     """
     # check train and test version are consistent
     check_version(dataset, error_type, train_file)

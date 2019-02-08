@@ -9,9 +9,10 @@ from inject import inject
 import sys
 
 def clean_mv(dataset):
-    """ Clean missing values
-        Args:
-            dataset (dict): dataset dict in config
+    """Clean missing values
+    
+    Args:
+        dataset (dict): dataset dict in config
     """
 
     # create saving folder
@@ -49,9 +50,10 @@ def clean_mv(dataset):
     utils.save_dfs(ind_train, ind_test, ind_path_pfx)
 
 def clean_outliers(dataset):
-    """ Clean outliers
-        Args:
-            dataset (dict): dataset dict in config
+    """Clean outliers
+    
+    Args:
+        dataset (dict): dataset dict in config
     """
 
     # create saving folder
@@ -93,9 +95,10 @@ def clean_outliers(dataset):
         # print('{} finished.'.format(cleaner.tag))
 
 def clean_duplicates(dataset):
-    """ Clean duplicates
-        Args:
-            dataset (dict): dataset dict in config
+    """Clean duplicates
+    
+    Args:
+        dataset (dict): dataset dict in config
     """
 
     # create saving folder
@@ -134,9 +137,10 @@ def clean_duplicates(dataset):
     # print('Finished')
 
 def clean_inconsistency(dataset):
-    """ Clean inconsistencies
-        Args:
-            dataset (dict): dataset dict in config
+    """Clean inconsistencies
+    
+    Args:
+        dataset (dict): dataset dict in config
     """
 
     # create saving folder

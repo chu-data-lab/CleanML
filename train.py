@@ -12,10 +12,10 @@ from sklearn.metrics import f1_score
 from sklearn.feature_selection import SelectKBest, chi2
 
 def parse_searcher(searcher):
-    """ Get results from gridsearch. 
+    """Get results from gridsearch
 
-        Args:
-            searcher: GridSearchCV object
+    Args:
+        searcher: GridSearchCV object
     """
     train_accs = searcher.cv_results_['mean_train_score']
     val_accs = searcher.cv_results_['mean_test_score']
@@ -26,15 +26,15 @@ def parse_searcher(searcher):
     return best_model, best_params, train_acc, val_acc
 
 def train(X_train, y_train, estimator, param_grid, seed=1, n_jobs=1):
-    """ Train the model 
+    """Train the model 
         
-        Args:
-            X_train (pd.DataFrame): features (train)
-            y_train (pd.DataFrame): label (train)
-            estimator (sklearn.model): model
-            param_grid (dict): hyper-parameters to tune
-            seed (int): seed for training
-            n_jobs (int): num of threads
+    Args:
+        X_train (pd.DataFrame): features (train)
+        y_train (pd.DataFrame): label (train)
+        estimator (sklearn.model): model
+        param_grid (dict): hyper-parameters to tune
+        seed (int): seed for training
+        n_jobs (int): num of threads
     """
     np.random.seed(seed)
     
@@ -70,7 +70,7 @@ def evaluate(best_model, X_test_list, y_test_list, test_files):
     return result
 
 def get_coarse_grid(model, seed, n_jobs, N):
-    """ Get hyper parameters (coarse random search) """
+    """Get hyper parameters (coarse random search) """
     np.random.seed(seed)
     low, high = model["hyperparams_range"]
     if model["hyperparams_type"] == "real":
@@ -82,7 +82,7 @@ def get_coarse_grid(model, seed, n_jobs, N):
     return param_grid
 
 def get_fine_grid(model, best_param_coarse, n_jobs, N):
-    """ Get hyper parameters (fine grid search, around the best parameter in coarse search) """
+    """Get hyper parameters (fine grid search, around the best parameter in coarse search) """
     if model["hyperparams_type"] == "real":
         base = np.log10(best_param_coarse)
         param_grid = {model['hyperparams']: np.linspace(10**(base-0.5), 10**(base+0.5), 20)}
@@ -132,17 +132,17 @@ def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
     return best_model, result
 
 def train_and_evaluate(X_train, y_train, X_test_list, y_test_list, test_files, model, n_jobs=1, seed=1):
-    """ Search hyperparameters and evaluate
+    """Search hyperparameters and evaluate
         
-        Args:
-            X_train (pd.DataFrame): features (train)
-            y_train (pd.DataFrame): label (train)
-            X_test_list (list): list of features (test)
-            y_test_list (list): list of label (test)
-            test_files (list): list of filenames of test set
-            model (dict): ml model dict in model.py
-            seed (int): seed for training
-            n_jobs (int): num of threads
+    Args:
+        X_train (pd.DataFrame): features (train)
+        y_train (pd.DataFrame): label (train)
+        X_test_list (list): list of features (test)
+        y_test_list (list): list of label (test)
+        test_files (list): list of filenames of test set
+        model (dict): ml model dict in model.py
+        seed (int): seed for training
+        n_jobs (int): num of threads
     """
     best_model, result_train = hyperparam_search(X_train, y_train, model, n_jobs, seed)
     result_test = evaluate(best_model, X_test_list, y_test_list, test_files)

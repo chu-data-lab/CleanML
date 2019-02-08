@@ -8,14 +8,14 @@ import config
 import datetime
 
 def one_experiment(dataset, error_type, train_file, model, seed, n_jobs=1):
-    """ One experiment on the datase given an error type, a train file, a model and a seed
+    """One experiment on the datase given an error type, a train file, a model and a seed
         
-        Args:
-            dataset (dict): dataset dict in config.py
-            error_type (string): error type
-            train_file (string): filename of training set (dirty or clean) 
-            model (dict): ml model dict in model.py
-            seed (int): seed for this experiment
+    Args:
+        dataset (dict): dataset dict in config.py
+        error_type (string): error type
+        train_file (string): filename of training set (dirty or clean) 
+        model (dict): ml model dict in model.py
+        seed (int): seed for this experiment
     """
     np.random.seed(seed)
     # generate random seeds for down sample and training
@@ -30,14 +30,14 @@ def one_experiment(dataset, error_type, train_file, model, seed, n_jobs=1):
     return result
 
 def experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
-    """ Run all experiments on one dataset.
+    """Run all experiments on one dataset.
 
-        Args:
-            dataset (dict): dataset dict in config.py
-            models (list): list of model dict in model.py
-            nosave (bool): whether not save results
-            seed: experiment seed
-            n_retrain: times of repeated experiments
+    Args:
+        dataset (dict): dataset dict in config.py
+        models (list): list of model dict in model.py
+        nosave (bool): whether not save results
+        seed: experiment seed
+        n_retrain: times of repeated experiments
     """
     # generate seeds for n experiments
     np.random.seed(seed)

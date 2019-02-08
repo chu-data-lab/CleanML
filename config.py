@@ -10,19 +10,28 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import RANSACRegressor
 
-# directory
+# =============================================================================
+# Directory Configuration
+# =============================================================================
+
 data_dir = 'data'
 result_dir = 'result'
 table_dir = 'table'
 
-# experiment
+# =============================================================================
+# Experiment Configuration
+# =============================================================================
+
 root_seed = 1
 n_resplit = 20
 n_retrain = 5
 test_ratio = 0.3
 max_size = 15000
 
-# datasets
+# =============================================================================
+# Dataset Configuration
+# =============================================================================
+
 KDD = {
     "data_dir": "KDD",
     "error_types": ['missing_values', 'outliers', 'mislabel'],
@@ -147,7 +156,10 @@ University = {
 
 datasets = [KDD, Credit, Airbnb, USCensus, EGG, Titanic, Marketing, Sensor, Movie, Restaurant, Citation, Company, University]
 
-# models
+# =============================================================================
+# Model Configuration
+# =============================================================================
+
 logistic_reg = {
     "name": "logistic_regression",
     "fn": LogisticRegression,

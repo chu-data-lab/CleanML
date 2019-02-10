@@ -122,16 +122,16 @@ def IQR(x, k=1.5):
     lower, upper = q25 - cut_off, q75 + cut_off
     return lambda y: (y > upper) | (y < lower)
 
-def iso_forest(x, contamination=0.01):
+def IF(x, contamination=0.01):
     # Isolation Forest (Univariate)
-    iso_forest = IsolationForest(contamination=contamination, behaviour='new')
-    iso_forest.fit(x.reshape(-1, 1))
-    return lambda y: (iso_forest.predict(y.reshape(-1, 1)) == -1)
+    IF = IsolationForest(contamination=contamination, behaviour='new')
+    IF.fit(x.reshape(-1, 1))
+    return lambda y: (IF.predict(y.reshape(-1, 1)) == -1)
 
 class OutlierCleaner(object):
     def __init__(self, detect_method, repairer=MVCleaner('delete'), **kwargs):
         super(OutlierCleaner, self).__init__()
-        detect_fn_dict = {'SD':SD, 'IQR':IQR, "iso_forest":iso_forest}
+        detect_fn_dict = {'SD':SD, 'IQR':IQR, "IF":IF}
         self.detect_method = detect_method
         self.detect_fn = detect_fn_dict[detect_method]
         self.repairer = repairer

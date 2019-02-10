@@ -1,4 +1,4 @@
- import pandas as pd
+import pandas as pd
 import os
 import config
 import sys
@@ -169,17 +169,17 @@ def get_train_files(error_type):
     elif error_type == 'outliers':
         filenames = ["dirty", 
                      "clean_SD_delete", 
-                     "clean_iso_forest_delete", 
+                     "clean_IF_delete", 
                      "clean_IQR_delete", 
                      "clean_SD_impute_mean_dummy", 
                      "clean_IQR_impute_mean_dummy", 
-                     "clean_iso_forest_impute_mean_dummy", 
+                     "clean_IF_impute_mean_dummy", 
                      "clean_SD_impute_median_dummy",
                      "clean_IQR_impute_median_dummy", 
-                     "clean_iso_forest_impute_median_dummy",
+                     "clean_IF_impute_median_dummy",
                      "clean_SD_impute_mode_dummy",
                      "clean_IQR_impute_mode_dummy", 
-                     "clean_iso_forest_impute_mode_dummy"]
+                     "clean_IF_impute_mode_dummy"]
     elif error_type == 'mislabel':
         filenames = ["dirty_uniform", 
                      "dirty_major",
@@ -337,7 +337,37 @@ def dict_to_dfs(dic, row_keys_idx, col_keys_idx, df_idx):
         dfs[k] = df
     return dfs
 
-def dict_to_xls(dic, row_keys_idx, col_keys_idx, save_dir, sheet_idx=None):
+def df_to_xls(df, save_path):
+    """Save single pd.DataFrame to a excel file"""
+    directory = os.path.dirname(save_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    writer = pd.ExcelWriter(save_path)
+    df.to_excel(writer)
+    writer.save()
+
+def df_to_pickle(df, save_path):
+    """Save single pd.DataFrame to a pickle file"""
+    directory = os.path.dirname(save_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    df.to_pickle(save_path)
+
+def dfs_to_xls(dfs, save_path):
+    """Save multiple pd.DataFrame in a dict to a excel file
+    
+    Args:
+        dfs (dict): {sheet_name: pd.DataFrame}
+    """
+    directory = os.path.dirname(save_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    writer = pd.ExcelWriter(save_path)
+    for k, df in dfs.items():
+        df.to_excel(writer, '%s'%k)
+    writer.save()
+
+def dict_to_xls(dic, row_keys_idx, col_keys_idx, save_path, sheet_idx=None):
     """Convert dict to excel
     
     Args:
@@ -346,13 +376,43 @@ def dict_to_xls(dic, row_keys_idx, col_keys_idx, save_dir, sheet_idx=None):
         col_keys_idx: index of keys for columns, ordered hierarchicallly
         sheet_idx: index of keys for sheet
     """
-    writer = pd.ExcelWriter(save_dir)
-
     if sheet_idx is None:
         df = dict_to_df(dic, row_keys_idx, col_keys_idx)
-        df.to_excel(writer)
+        df_to_xls(df, save_path)
     else:
         dfs = dict_to_dfs(dic, row_keys_idx, col_keys_idx, sheet_idx)
-        for k, df in dfs.items():
-            df.to_excel(writer, '%s'%k)            
-    writer.save()
+        dfs_to_xls(dfs, save_path)
+
+def flatten_dict(dictionary):
+    """Convert hierarchic dictionary into a flat dict by extending dimension of keys.
+    (e.g. {"a": {"b":"c"}} -> {("a", "b"): "c"})
+    """
+    flat_dict = {}
+    if type(list(dictionary.values())[0]) != dict:
+        return dictionary
+            
+    for k, v in dictionary.items():
+        if type(k) != tuple:
+            k = (k,)
+        for vk, vv in v.items():
+            if type(vk) != tuple:
+                vk = (vk,)
+            new_key = k + vk
+            flat_dict[new_key] = vv
+    return flatten_dict(flat_dict)
+
+def result_to_table():
+    save_dir = os.path.join(config.table_dir, 'training_result')
+    result_files = [file for file in os.listdir(config.result_dir) if file.endswith('result.json')]
+    for file in result_files:
+        file_name = file.split('.')[0]
+        result_path = os.path.join(config.result_dir, file)
+        result = json.load(open(result_path, 'r'))
+        result_dict = {}
+        for k, v in result.items():
+            new_k = tuple(k.split('/'))
+            new_v = {vk: vv for vk, vv in v.items() if vk != "best_params"}
+            result_dict[new_k] = new_v
+        result_dict = flatten_dict(result_dict)
+        save_path = os.path.join(save_dir, file_name+'.xlsx')
+        result_df = utils.dict_to_xls(result_dict, [1, 3, 4, 5], [6], save_path, sheet_idx=2)

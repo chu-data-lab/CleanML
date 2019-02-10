@@ -75,8 +75,8 @@ Titanic = {
     "ml_task": "classification"
 }
 
-EGG = {
-    "data_dir": "EGG",
+EEG = {
+    "data_dir": "EEG",
     "error_types": ['outliers', 'mislabel'],
     'label':'Eye',
     "categorical_variables":['Eye'],
@@ -154,7 +154,7 @@ University = {
     "drop_variables": ["university name", "academic-emphasis"]
 }
 
-datasets = [KDD, Credit, Airbnb, USCensus, EGG, Titanic, Marketing, Sensor, Movie, Restaurant, Citation, Company, University]
+datasets = [KDD, Credit, Airbnb, USCensus, EEG, Titanic, Marketing, Sensor, Movie, Restaurant, Citation, Company, University]
 
 # =============================================================================
 # Model Configuration

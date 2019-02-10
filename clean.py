@@ -72,7 +72,7 @@ def clean_outliers(dataset):
     utils.save_dfs(dirty_train, dirty_test, dirty_path_pfx, version)
 
     # get cleaners with different detect and repair methods
-    detect_methods = ["SD", "IQR", "iso_forest"]
+    detect_methods = ["SD", "IQR", "IF"]
     num_methods = ['mean', 'median', 'mode']
     cat_methods = ['dummy']
     repairers = [MVCleaner(method='impute', num=num, cat=cat) for num in num_methods for cat in cat_methods]

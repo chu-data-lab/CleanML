@@ -9,6 +9,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import RANSACRegressor
+from xgboost import XGBClassifier
 
 # =============================================================================
 # Directory Configuration
@@ -230,4 +231,15 @@ gaussian_nb = {
     "type": "classification"
 }
 
-models = [logistic_reg, knn_clf, dt_clf, adaboost_clf, random_forest_clf, gaussian_nb]
+xgb_clf = {
+    "name":"XGBoost",
+    "fn": XGBClassifier,
+    "fixed_params": {},
+    "type": "classification",
+    "hyperparams": "max_depth",
+    "hyperparams_type": "int",
+    "hyperparams_range": [1, 100]
+}
+
+# models = [logistic_reg, knn_clf, dt_clf, adaboost_clf, random_forest_clf, gaussian_nb]
+models = [xgb_clf]

@@ -6,6 +6,7 @@ import json
 import numpy as np
 from matplotlib import pyplot as plt
 import shutil
+from collections import defaultdict
 
 # =============================================================================
 # Data related utils
@@ -247,11 +248,12 @@ def check_completed(dataset, split_seed, experiment_seed):
 # Result related utils
 # =============================================================================
 
-def load_result(dataset_name=None):
+def load_result(dataset_name=None, parse_key=False):
     """Load result of one dataset or all datasets (if no argument) from json to dict
 
     Args:
         dataset_name (string): dataset name. If not specified, load results of all datasets.
+        parse_key (bool): whether convert key from string to tuple
     """
     if dataset_name is None:
         files = [file for file in os.listdir(config.result_dir) if file.endswith('_result.json')]
@@ -263,6 +265,14 @@ def load_result(dataset_name=None):
     for path in result_path:
         if os.path.exists(path):
             result.update(json.load(open(path, 'r')))
+
+    if parse_key:
+        new_result = {}
+        for key, value in result.items():
+            new_key = tuple(key.split('/'))
+            new_result[new_key] = value
+        result = new_result
+
     return result
 
 def save_result(dataset_name, key, res):
@@ -387,10 +397,11 @@ def flatten_dict(dictionary):
     """Convert hierarchic dictionary into a flat dict by extending dimension of keys.
     (e.g. {"a": {"b":"c"}} -> {("a", "b"): "c"})
     """
-    flat_dict = {}
-    if type(list(dictionary.values())[0]) != dict:
+    values = list(dictionary.values())
+    if any([type(v) != dict for v in values]):
         return dictionary
-            
+
+    flat_dict = {}
     for k, v in dictionary.items():
         if type(k) != tuple:
             k = (k,)
@@ -401,18 +412,224 @@ def flatten_dict(dictionary):
             flat_dict[new_key] = vv
     return flatten_dict(flat_dict)
 
-def result_to_table():
-    save_dir = os.path.join(config.table_dir, 'training_result')
-    result_files = [file for file in os.listdir(config.result_dir) if file.endswith('result.json')]
-    for file in result_files:
-        file_name = file.split('.')[0]
-        result_path = os.path.join(config.result_dir, file)
-        result = json.load(open(result_path, 'r'))
-        result_dict = {}
-        for k, v in result.items():
-            new_k = tuple(k.split('/'))
-            new_v = {vk: vv for vk, vv in v.items() if vk != "best_params"}
-            result_dict[new_k] = new_v
-        result_dict = flatten_dict(result_dict)
-        save_path = os.path.join(save_dir, file_name+'.xlsx')
-        result_df = utils.dict_to_xls(result_dict, [1, 3, 4, 5], [6], save_path, sheet_idx=2)
+def rearrange_dict(dictionary, order):
+    """Rearrange the order of key of dictionary"""
+    new_dict = {}
+    for key, value in dictionary.items():
+        if len(key) < len(order):
+            print("Number of new order must be smaller than the length of key")
+            sys.exit()
+
+        new_order = np.arange(len(key))
+        for i, o in enumerate(order):
+            new_order[i] = o
+
+        new_key = tuple([key[i] for i in new_order])
+        new_dict[new_key] = value
+    return new_dict
+
+def makedirs(dir_list):
+    save_dir = os.path.join(*dir_list)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    return save_dir
+
+def result_to_table(result, save_dir, csv=True, xls=True):
+    """Convert result to tables. One table for each dataset.
+
+    Args:
+        result (dict): key: (dataset_name, split_seed, error_type, train_file, model_name, seed)
+        csv (bool): save csv table
+        xls (bool): save xls table
+
+    """
+
+    # save csv table
+    if csv:
+        csv_dir = makedirs([save_dir, 'csv'])
+        flat_result = flatten_dict({k + ('result',):v for k, v in result.items()})
+        result_df = dict_to_df(flat_result, [0, 1, 2, 3, 4, 5, 7], [6])
+        save_path = os.path.join(csv_dir, "training_result.csv")
+        result_df.to_csv(save_path, index_label=['dataset', 'split_seed', 'error_type', 'train_file', 'model_name', 'seed', 'metric'])
+
+    if xls:
+        xls_dir = makedirs([save_dir, 'xls'])
+        datasets = list({k[0] for k in result.keys()})
+
+        for dataset in datasets:
+            dataset_result = flatten_dict({k:v for k, v in result.items() if k[0] == dataset})
+            save_path = os.path.join(xls_dir, '{}_result.xls'.format(dataset))
+            dict_to_xls(dataset_result, [0, 1, 3, 4, 5], [6], save_path, sheet_idx=2)
+            
+def group(result, idx, keepdim=False):
+    """Group results on one dimension (key component) into a list
+
+    Args:
+        result (dict): result dict
+            key (tuple): e.g. (dataset_name, split_seed, error_type, train_file, model_name, seed)
+            value (dict): {metric_name: metric}
+        idx: the index of dimension (key component) by which the result is grouped 
+        keepdim (bool): keep or delete dimension by which the result is grouped 
+    """
+
+    # get domain in given dimension (key component)
+    domain = list({k[idx] for k in result.keys()})
+
+    # loop through each value in domain, append corresponding results into a list
+    new_result = {}
+    for x in domain:
+        for old_key, v in result.items():
+
+            if x != old_key[idx]:
+                continue
+
+            # new key（eliminate the given dimension)
+            new_key = tuple([old_key[i] for i in range(len(old_key)) if i != idx])
+
+            # new value 
+            if new_key not in new_result.keys():
+                new_result[new_key] = defaultdict(list)
+            
+            # apppend results into list
+            for vk, vv in v.items():
+                # don't include best param saved in result
+                if vk != "best_params":
+                    new_result[new_key][vk].append(vv)
+
+            if keepdim:
+                new_result[new_key]["group_key"].append(old_key[idx])
+    
+    if keepdim:
+        final_result = {}
+        for k, v in new_result.items():
+            group_key = "/".join(v["group_key"])
+            new_k = k[0:idx] + (group_key,) + k[idx:]
+            del v["group_key"]
+            final_result[new_k] = v
+        new_result = final_result
+    return new_result
+
+def reduce_by_mean(result):
+    """Reduce a list of results into a single result by mean
+        
+    Args:
+        result (dict): result dict
+            key (tuple): (dataset_name, split_seed, error_type, train_file, model_name)
+            value (dict): {metric_name: [metric lists]}
+    """
+    new_result = {}
+    for k, v in result.items():
+        new_value = {}
+        for vk, vv in v.items():
+            new_value[vk] = np.mean(vv)
+        new_result[k] = new_value
+    return new_result
+
+def reduce_by_max_val(result, dim=None, dim_name=None):
+    """Reduce a list of results into a single result by the result corresponding to the best val_acc
+        
+    Args:
+        result (dict): result dict
+            key (tuple): (dataset_name, split_seed, error_type, train_file, model_name)
+            value (dict): {metric_name: [metric lists]}
+    """
+    new_result = {}
+    for k, v in result.items():
+        new_value = {}
+
+        if np.isnan(v['val_acc']).all():
+            best_val_idx = 0
+        else:
+            best_val_idx = np.nanargmax(v['val_acc'])
+
+        if dim is not None:
+            best = k[dim].split('/')[best_val_idx]
+            new_key = k[0:dim] + (dim_name,) + k[dim+1:]
+        else:
+            new_key = k
+
+        for vk, vv in v.items():
+            new_value[vk] = vv[best_val_idx]
+
+        if dim is not None:
+            new_value[dim_name] = best
+
+        new_result[new_key] = new_value
+
+    return new_result
+
+def group_reduce_by_best_clean(result):
+    """Group by clean method and then reduce a list of results into a single result by the result corresponding to the best val_acc
+        
+    Args:
+        result (dict): result dict
+            key (tuple): (dataset_name, split_seed, error_type, train_file, model_name)
+            value (dict): {metric_name: [metric lists]}
+    """
+    dirty = {}
+    clean = {}
+    for k, v in result.items():
+        train_file = k[3]
+        if train_file[0:5] == "dirty" or train_file[0:5] == "delet":
+            dirty[k] = v
+        else:
+            new_v = {}
+            for vk, vv in v.items():
+                vk_list = vk.split('_')
+                if vk_list[0] in ['clean', 'impute']:
+                    new_vk = '_'.join([vk_list[0], vk_list[-2], vk_list[-1]])
+                else:
+                    new_vk = vk                
+                
+                new_v[new_vk] = vv
+            clean[k] = new_v
+
+    clean = group(clean, 3, keepdim=True)
+    clean = reduce_by_max_val(clean, dim=3, dim_name="clean")
+
+    new_clean = {}
+    for k, v in clean.items():
+        if k[2] == 'missing_values':
+            new_k = k[0:3] + ('impute',) + k[4:]
+        else:
+            new_k = k
+        new_clean[new_k] = v
+    
+    new_dirty = {}
+    for k, v in dirty.items():
+        new_v = {}
+        clean_key = k[0:3] + ("clean",) + k[4:]
+        clean_method = clean[clean_key]["clean"]
+
+        new_v = {}
+        for vk, vv in v.items():
+            vk_list = vk.split('_')
+            if vk_list[0] not in ['clean', 'impute']:
+                new_v[vk] = vv
+
+        if k[2] == 'missing_values':
+            new_v["impute_test_acc"] = v["{}_test_acc".format(clean_method)]
+            new_v["impute_test_f1"] = v["{}_test_f1".format(clean_method)]
+        else:
+            new_v["clean_test_acc"] = v["{}_test_acc".format(clean_method)]
+            new_v["clean_test_f1"] = v["{}_test_f1".format(clean_method)]
+
+        new_dirty[k] = new_v
+
+    new_result = {**new_dirty, **new_clean}
+    return new_result
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

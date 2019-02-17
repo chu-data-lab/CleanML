@@ -16,7 +16,7 @@ from sklearn.linear_model import RANSACRegressor
 
 data_dir = 'data'
 result_dir = 'result'
-table_dir = 'table'
+analysis_dir = 'analysis'
 
 # =============================================================================
 # Experiment Configuration

@@ -2,7 +2,6 @@ import pandas as pd
 import config
 import numpy as np
 import utils
-import itertools
 
 def load_rejects():
     two_tail_reject = pd.read_pickle('./table/t_test/two_tail_reject.pkl')
@@ -67,11 +66,13 @@ def aggregate(rejects, fixed_dims, save_path):
     utils.dict_to_xls(agg_result, list(range(len(new_key)-1)), [len(new_key)-1], save_path)
     return agg_result
 
-rejects = load_rejects()
 
-q1 = aggregate(rejects, [0, 4], './table/query/q1.xls')
-q2 = aggregate(rejects, [0, 4, 2], './table/query/q2.xls')
-q3 = aggregate(rejects, [0, 4, 3], './table/query/q3.xls')
-q4 = aggregate(rejects, [0, 4, 2, 3], './table/query/q4.xls')
-q5 = aggregate(rejects, [0, 4, 2, 3, 1], './table/query/q5.xls')
+if __name__ == '__main__':
+    rejects = load_rejects()
+    q1 = aggregate(rejects, [0, 4], './table/query/q1.xls')
+    q2 = aggregate(rejects, [0, 4, 2], './table/query/q2.xls')
+    q3 = aggregate(rejects, [0, 4, 3], './table/query/q3.xls')
+    q4 = aggregate(rejects, [0, 4, 2, 3], './table/query/q4.xls')
+    q5 = aggregate(rejects, [0, 4, 2, 3, 1], './table/query/q5.xls')
+    q6 = aggregate(rejects, [0, 4, 1], './table/query/q6.xls')
 

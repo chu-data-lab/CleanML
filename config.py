@@ -128,16 +128,6 @@ Movie = {
     "ml_task": "classification"
 }
 
-Food = {
-    "data_dir": "Food",
-    "error_types": ['inconsistency'],
-    "categorical_variables": ['Violations', "Results"],
-    "drop_variables": ["Inspection Date"],
-    "label": "Results",
-    "ml_task": "classification",
-    "drop_variables":[],
-    "text_variables":["DBA Name"]
-}
 
 Company = {
     "data_dir": "Company",
@@ -235,6 +225,15 @@ xgb_clf = {
     "name":"XGBoost",
     "fn": XGBClassifier,
     "fixed_params": {},
+    "type": "classification",
+    "hyperparams": "max_depth",
+    "hyperparams_type": "int",
+    "hyperparams_range": [1, 100]
+}
+
+xgb_clf_gpu = {
+    "name":"XGBoost",
+    "fixed_params": {"tree_method":"auto", "silent":1, "objective":'binary:logistic'},
     "type": "classification",
     "hyperparams": "max_depth",
     "hyperparams_type": "int",

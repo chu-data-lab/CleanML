@@ -241,4 +241,4 @@ xgb_clf_gpu = {
 }
 
 # models = [logistic_reg, knn_clf, dt_clf, adaboost_clf, random_forest_clf, gaussian_nb]
-models = [xgb_clf]
+models = [guassian_nb]

@@ -10,6 +10,7 @@ import pickle
 from preprocess import preprocess
 from sklearn.metrics import f1_score
 from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.model_selection import cross_val_score
 
 def parse_searcher(searcher):
     """Get results from gridsearch
@@ -46,10 +47,10 @@ def train(X_train, y_train, estimator, param_grid, seed=1, n_jobs=1):
     else: 
         # if no hyper parameter is given, train directly
         best_model = estimator
+        val_acc = cross_val_score(best_model, X_train, y_train, cv=5).mean()
         best_model.fit(X_train, y_train)
         train_acc = best_model.score(X_train, y_train)
         best_params = {}
-        val_acc = np.nan
 
     result = {"best_params": best_params, "train_acc":train_acc, "val_acc": val_acc}
     return best_model, result

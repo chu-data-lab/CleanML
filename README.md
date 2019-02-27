@@ -1,4 +1,4 @@
-# CleaningForML
+# CleanML
 This repository provides the implementation of experiments as described in the paper:
 > Impacts of Dirty Data on Machine Learning Models
 

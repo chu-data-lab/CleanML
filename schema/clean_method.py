@@ -233,7 +233,7 @@ class MislabelCleaner(object):
         index_test_path = utils.get_dir(dataset, 'raw', 'idx_test.csv')
         index_train = pd.read_csv(index_train_path).values.reshape(-1)
         index_test = pd.read_csv(index_test_path).values.reshape(-1)
-        clean_path = utils.get_dir(dataset, 'raw', 'clean.csv')
+        clean_path = utils.get_dir(dataset, 'raw', 'mislabel_clean_raw.csv')
         clean = utils.load_df(dataset, clean_path)
         self.clean_train = clean.loc[index_train, :]
         self.clean_test = clean.loc[index_test, :]

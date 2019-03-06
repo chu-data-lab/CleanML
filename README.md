@@ -5,7 +5,7 @@ Joint Data Cleaning and Machine Learning [Experiments and Analysis]
 
 ## Basic Usage
 ### Run Experiments
-To run experiments, execute the following command from the project home directory:
+To run experiments, unzip `data.zip` and execute the following command from the project home directory:
 
 ```
 python main.py --run_experiments [--dataset <name>] [--cpu <num_cpu>] [--log]
@@ -17,7 +17,7 @@ python main.py --run_experiments [--dataset <name>] [--cpu <num_cpu>] [--log]
 --log: whether to log experiment process
 
 #### Output:
-The experimental results for each dataset will be saved in `/result` directory as a json file named as \<dataset name\>\_result.json. Each result is a key-value pair. The key is a string in format "\<dataset\>/\<split seed\>/\<error type\>/\<clean method\>/\<ML model\>/\<random search seed\>". The value is a set of key-value pairs for each evaluation metric and result.
+The experimental results for each dataset will be saved in `/result` directory as a json file named as \<dataset name\>\_result.json. Each result is a key-value pair. The key is a string in format "\<dataset\>/\<split seed\>/\<error type\>/\<clean method\>/\<ML model\>/\<random search seed\>". The value is a set of key-value pairs for each evaluation metric and result. Our experimental results are provided in `result.zip`.
 
 ### Run Analysis
 To run analysis for populating relations described in the paper, execute the following command from the project home directory:

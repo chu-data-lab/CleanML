@@ -20,7 +20,7 @@ python main.py --run_experiments [--dataset <name>] [--cpu <num_cpu>] [--log]
 The experimental results for each dataset will be saved in `/result` directory as a json file named as \<dataset name\>\_result.json. Each result is a key-value pair. The key is a string in format "\<dataset\>/\<split seed\>/\<error type\>/\<clean method\>/\<ML model\>/\<random search seed\>". The value is a set of key-value pairs for each evaluation metric and result. Our experimental results are provided in `result.zip`.
 
 ### Run Analysis
-To run analysis for populating relations described in the paper, execute the following command from the project home directory:
+To run analysis for populating relations described in the paper, unzip `result.zip` and execute the following command from the project home directory:
 
 ```
 python main.py --analysis [--alpha <name>]
@@ -34,7 +34,7 @@ The relations R1, R2 and R3 will be saved in `/analysis` directory.
 
 ## Extend Domain of Attributes
 ### Add new datasets:
-To add a new dataset, first, create a new folder with dataset name under `/data` and create a `raw` folder under the new folder.  The `raw` folder must contain raw data named `raw.csv`. For dataset with inconsistencies, it must also contain the inconsistency-cleaned version data named `inconsistency_clean_raw.csv`. For dataset with mislabels, it must also contain the mislabel-cleaned version data named `mislabel_clean_raw.csv`.The structure of the directory looks like:
+To add a new dataset, first, create a new folder with dataset name under `/data` and create a `raw` folder under the new folder.  The `raw` folder must contain raw data named `raw.csv`. For dataset with inconsistencies, it must also contain the inconsistency-cleaned version data named `inconsistency_clean_raw.csv`. For dataset with mislabels, it must also contain the mislabel-cleaned version data named `mislabel_clean_raw.csv`. The structure of the directory looks like:
 <pre>
 .
 └── data

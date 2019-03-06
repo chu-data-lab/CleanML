@@ -1,7 +1,14 @@
 # CleanML
-This repository provides the implementation of experiments as described in the paper:
+
+This is the CleanML Benchmark for Joint Data Cleaning and Machine Learning. 
+
+The codebase is located in: https://github.com/chu-data-lab/CleanML
+
+The details of the benchmark methodology and design are described in the paper:
 > CleanML: A Benchmark for
 Joint Data Cleaning and Machine Learning [Experiments and Analysis]
+
+
 
 ## Basic Usage
 ### Run Experiments

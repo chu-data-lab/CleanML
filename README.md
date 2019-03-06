@@ -37,7 +37,7 @@ python3 main.py --run_analysis [--alpha <value>]
 --alpha: the significance level for multiple hypothesis test. Default is 0.05.
 
 #### Output:
-The relations R1, R2 and R3 will be saved in `/analysis` directory.
+The relations R1, R2 and R3 will be saved in `/analysis` directory. Our analysis results are provided in `analysis.zip`.
 
 ## Extend Domain of Attributes
 ### Add new datasets:

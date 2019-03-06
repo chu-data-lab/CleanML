@@ -1,12 +1,14 @@
+# define the domain of cleaning method
 import numpy as np
 import pandas as pd
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.ensemble import IsolationForest
 from sklearn import preprocessing
-import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import DBSCAN
 import sys
+import utils
+import os
 
 class MVCleaner(object):
     def __init__(self, method='delete', **kwargs):
@@ -24,7 +26,7 @@ class MVCleaner(object):
     def detect(self, df):
         return df.isnull()
 
-    def fit(self, df):
+    def fit(self, dataset, df):
         if self.method == 'impute':
             num_method = self.kwargs['num']
             cat_method = self.kwargs['cat']
@@ -53,7 +55,7 @@ class MVCleaner(object):
             df_clean = df.fillna(value=self.impute)
         return df_clean
 
-    def clean(self, df):
+    def clean_df(self, df):
         if not self.is_fit:
             print('Must fit before clean.')
             sys.exit()
@@ -61,9 +63,17 @@ class MVCleaner(object):
         df_clean = self.repair(df)
         return df_clean, mv_mat
 
+    def clean(self, dirty_train, dirty_test):
+        clean_train, indicator_train = self.clean_df(dirty_train)
+        clean_test, indicator_test = self.clean_df(dirty_test)
+        return clean_train, indicator_train, clean_test, indicator_test
+
 class DuplicatesCleaner(object):
     def __init__(self):
         super(DuplicatesCleaner, self).__init__()
+
+    def fit(self, dataset, df):
+        self.keys = dataset['key_columns']
     
     def detect(self, df, keys):
         key_col = pd.DataFrame(df, columns=keys)
@@ -76,25 +86,37 @@ class DuplicatesCleaner(object):
         df_clean = df[not_dup]
         return df_clean
 
-    def clean(self, df, keys):
-        is_dup = self.detect(df, keys)
+    def clean_df(self, df):
+        is_dup = self.detect(df, self.keys)
         df_clean = self.repair(df, is_dup)
         return df_clean, is_dup
+
+    def clean(self, dirty_train, dirty_test):
+        clean_train, indicator_train = self.clean_df(dirty_train)
+        clean_test, indicator_test = self.clean_df(dirty_test)
+        return clean_train, indicator_train, clean_test, indicator_test
 
 class InconsistencyCleaner(object):
     def __init__(self):
         super(InconsistencyCleaner, self).__init__()
 
-    def fit(self, dirty_train, clean_train):
-        N, m = dirty_train.shape
-        dirty_train = dirty_train.values
-        clean_train = clean_train.values
-        mask = (dirty_train != clean_train)
-        dirty = dirty_train[mask]
-        clean = clean_train[mask]
+    def fit(self, dataset, dirty_train):
+        dirty_raw_path = utils.get_dir(dataset, 'raw', 'raw.csv')
+        clean_raw_path = utils.get_dir(dataset, 'raw', 'inconsistency_clean_raw.csv')
+        if not os.path.exists(clean_raw_path):
+            print("Must provide clean version of raw data for cleaning inconsistency")
+            sys.exit(1)
+        dirty_raw = utils.load_df(dataset, dirty_raw_path)
+        clean_raw = utils.load_df(dataset, clean_raw_path)
+        N, m = dirty_raw.shape
+        dirty_raw = dirty_raw.values
+        clean_raw = clean_raw.values
+        mask = (dirty_raw != clean_raw)
+        dirty = dirty_raw[mask]
+        clean = clean_raw[mask]
         self.incon_dict = dict(zip(dirty, clean))
 
-    def clean(self, df):
+    def clean_df(self, df):
         df_clean = df.copy()
         N, m = df_clean.shape
         indicator = np.zeros_like(df_clean).astype(bool)
@@ -106,6 +128,11 @@ class InconsistencyCleaner(object):
                     indicator[i, j] = True
         indicator = pd.DataFrame(indicator, columns=df.columns)
         return df_clean, indicator
+
+    def clean(self, dirty_train, dirty_test):
+        clean_train, indicator_train = self.clean_df(dirty_train)
+        clean_test, indicator_test = self.clean_df(dirty_test)
+        return clean_train, indicator_train, clean_test, indicator_test
 
 def SD(x, nstd=3.0):
     # Standard Deviaiton Method (Univariate)
@@ -139,7 +166,7 @@ class OutlierCleaner(object):
         self.tag = "{}_{}".format(detect_method, repairer.tag)
         self.is_fit = False
     
-    def fit(self, df):
+    def fit(self, dataset, df):
         num_df = df.select_dtypes(include='number')
         cat_df = df.select_dtypes(exclude='number')
         X = num_df.values
@@ -154,7 +181,7 @@ class OutlierCleaner(object):
         ind = self.detect(df)
         df_copy = df.copy()
         df_copy[ind] = np.nan
-        self.repairer.fit(df_copy)
+        self.repairer.fit(dataset, df_copy)
         self.is_fit = True
 
     def detect(self, df):
@@ -179,10 +206,10 @@ class OutlierCleaner(object):
     def repair(self, df, ind):
         df_copy = df.copy()
         df_copy[ind] = np.nan
-        df_clean, _ = self.repairer.clean(df_copy)
+        df_clean, _ = self.repairer.clean_df(df_copy)
         return df_clean
 
-    def clean(self, df, ignore=None):
+    def clean_df(self, df, ignore=None):
         if not self.is_fit:
             print("Must fit before clean")
             sys.exit()
@@ -191,3 +218,27 @@ class OutlierCleaner(object):
             ind.loc[:, ignore] = False
         df_clean = self.repair(df, ind)
         return df_clean, ind
+
+    def clean(self, dirty_train, dirty_test):
+        clean_train, indicator_train = self.clean_df(dirty_train)
+        clean_test, indicator_test = self.clean_df(dirty_test)
+        return clean_train, indicator_train, clean_test, indicator_test
+
+class MislabelCleaner(object):
+    def __init__(self):
+        super(MislabelCleaner, self).__init__()
+
+    def fit(self, dataset, dirty_train):
+        index_train_path = utils.get_dir(dataset, 'raw', 'idx_train.csv')
+        index_test_path = utils.get_dir(dataset, 'raw', 'idx_test.csv')
+        index_train = pd.read_csv(index_train_path).values.reshape(-1)
+        index_test = pd.read_csv(index_test_path).values.reshape(-1)
+        clean_path = utils.get_dir(dataset, 'raw', 'clean.csv')
+        clean = utils.load_df(dataset, clean_path)
+        self.clean_train = clean.loc[index_train, :]
+        self.clean_test = clean.loc[index_test, :]
+
+    def clean(self, dirty_train, dirty_test):
+        indicator_train = pd.DataFrame(np.any(self.clean_train.values != dirty_train.values, axis=1), columns=['indicator'])
+        indicator_test = pd.DataFrame(np.any(self.clean_test.values != dirty_test.values, axis=1), columns=['indicator'])
+        return self.clean_train, indicator_train, self.clean_test, indicator_test

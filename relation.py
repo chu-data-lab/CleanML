@@ -1,4 +1,4 @@
-"""Run Hypothesis Test"""
+"""Populate relations using training results"""
 import json
 import pandas as pd
 import numpy as np
@@ -7,7 +7,7 @@ from scipy.stats import ttest_rel
 import config
 import os
 from matplotlib import pyplot as plt
-from statsmodels.stats.multitest import multipletests
+from statsmodels.stats.multitest import multipletests, fdrcorrection_twostage
 import json
 import sys
 
@@ -54,7 +54,7 @@ class Compare(object):
         four_metrics = utils.dict_to_df(four_metrics, [0, 2, 1], [3, 4]).sort_index()
         return four_metrics
 
-    def compare_four_metrics(self, four_metrics, file_types):
+    def compare_four_metrics(self, error_type, four_metrics, file_types):
         """Compute the relative difference between four metrics
 
         Args:
@@ -67,10 +67,12 @@ class Compare(object):
         C = lambda m: m.loc[file_types[1], file_types[0]]
         D = lambda m: m.loc[file_types[1], file_types[1]]
 
-        CD = lambda m: self.compare_method(C(m), D(m))
-        BD = lambda m: self.compare_method(B(m), D(m))
-        # AB = lambda m: self.compare_method(A(m), B(m))
-        # AC = lambda m: self.compare_method(A(m), C(m))
+        scenarios = {
+            "CD":lambda m: self.compare_method(C(m), D(m)),
+            "BD":lambda m: self.compare_method(B(m), D(m)),
+            "AB":lambda m: self.compare_method(A(m), B(m)),
+            "AC":lambda m: self.compare_method(A(m), C(m))
+        }
 
         comparison = {}
         datasets = list(set(four_metrics.index.get_level_values(0)))
@@ -78,11 +80,8 @@ class Compare(object):
         for dataset in datasets:
             for model in models:
                 m = four_metrics.loc[dataset, model]
-                comparison[(dataset, model, "CD")] = CD(m)
-                comparison[(dataset, model, "BD")] = BD(m)
-                # comparison[(dataset, model, "AC")] = AC(m)
-                # comparison[(dataset, model, "AB")] = AB(m)
-                # comparison[(dataset, model, "AD")] = AD(m)
+                for s in config.scenarios[error_type]:
+                    comparison[(dataset, model, s)] = scenarios[s](m)
         # comparison = utils.dict_to_df(comparison, [0, 1], [2])
         return comparison
 
@@ -106,7 +105,7 @@ class Compare(object):
         for f2 in file2:
             file_types = [file1, f2]
             four_metrics = self.get_four_metrics(error_type, file_types)
-            comparison = self.compare_four_metrics(four_metrics, file_types)
+            comparison = self.compare_four_metrics(error_type, four_metrics, file_types)
             metrics[f2] = four_metrics
             comparisons[f2] = comparison
         return comparisons, metrics
@@ -117,7 +116,7 @@ class Compare(object):
             utils.dfs_to_xls(self.four_metrics[error_type], save_path)
         flat_metrics = utils.flatten_dict(self.four_metrics)
 
-"""Compare method"""
+"""Comparing method"""
 def t_test(dirty, clean):
     def two_tailed_t_test(dirty, clean):
         n_d = len(dirty)
@@ -142,7 +141,7 @@ def t_test(dirty, clean):
             else:
                 p = 1 - p_two * 0.5
         return {"t-stats":t, "p-value":p}
-
+     
     result = {}
     result['two_tail'] = two_tailed_t_test(dirty, clean)
     result['one_tail_pos'] = one_tailed_t_test(dirty, clean, 'positive')
@@ -157,11 +156,19 @@ def mean_acc(dirty, clean):
     result = {"dirty_acc": np.mean(dirty), "clean_acc":np.mean(clean)}
     return result
 
-def direct_count(dirty, clean):
-    result = {"pos_count": np.sum(dirty < clean), "neg_count": np.sum(dirty > clean), "same_count": np.sum(dirty == clean)}
+def diff_f1(dirty, clean):
+    result = {"diff_f1": np.mean((clean - dirty) / dirty)}
     return result
 
-"""Compare metric"""
+def diff_acc(dirty, clean):
+    result = {"diff_acc": np.mean((clean - dirty) / dirty)}
+    return result
+
+def direct_count(dirty, clean):
+    result = {"pos_count": np.sum(dirty - clean < -1e-8), "neg_count": np.sum(dirty - clean > 1e-8), "same_count": np.sum(np.abs(dirty - clean) < 1e-8)}
+    return result
+
+"""Comparing metrics"""
 def test_f1(dataset_name, error_type, test_file):
     metric = test_file + "_test_f1"
     return metric
@@ -181,46 +188,42 @@ def mixed_f1_acc(dataset_name, error_type, test_file):
     return metric
 
 """Multiple hypothesis test """
-def BY_procedure(t_test_results, test_type, alpha=0.05):
-    p_vals = t_test_results.loc[:, (test_type, 'p-value')]
-    reject, correct_p_vals, _, _ = multipletests(p_vals.values, method='fdr_by', alpha=alpha)
-    reject_df = pd.DataFrame(reject, index=p_vals.index, columns=['reject'])
-    correct_p_df = pd.DataFrame(correct_p_vals, index=p_vals.index, columns=['p-value'])
-    return reject_df, correct_p_df
-
-def hypothesis_test(t_test_results, alpha=0.05):
+def hypothesis_test(t_test_results, alpha=0.05, multiple_test_method='fdr_by'):
     # convert to pd.DataFrame
     t_test_results_df = utils.dict_to_df(t_test_results, [0, 1, 2, 3, 4], [5, 6])
 
     # run BY procedure
-    test_types = ['two_tail', 'one_tail_pos','one_tail_neg']
     rejects = {}
-    correct_p= {}
-    for test_type in test_types:
-        r, p = BY_procedure(t_test_results_df, test_type, alpha=alpha)
-        if test_type != 'two_tail':
-            rejects[test_type] = r
-            correct_p[test_type] = p
-        # save_path = os.path.join(config.table_dir, 't_test', '{}_reject.pkl'.format(test_type))
-        # utils.df_to_pickle(r, save_path)
+    correct_p_vals = {}
+    test_types = ['two_tail', 'one_tail_pos','one_tail_neg']
+    pvals = [t_test_results_df.loc[:, (test_type, 'p-value')].values for test_type in test_types]
+    pvals = np.concatenate(pvals, axis=0)
+    rej, cor_p, m0, alpha_stages = multipletests(pvals, method=multiple_test_method, alpha=alpha)
+    # print(np.max(pvals[rej]), np.max(cor_p[rej]))
+    rej = np.split(rej, 3)
+    cor_p = np.split(cor_p, 3)
+    for test_type, r, p in zip(test_types, rej, cor_p):
+        rejects[test_type] = pd.DataFrame(r, index=t_test_results_df.index, columns=['reject'])
+        correct_p_vals[test_type] = pd.DataFrame(p, index=t_test_results_df.index, columns=['p-value'])
 
     hypothesis_result = {}
     for e, d, c, m, s, _, _ in t_test_results.keys():
-        hypothesis_result[(e, d, c, m, s, 'pos_pvalue')] = correct_p['one_tail_pos'].loc[(e, d, c, m, s),'p-value']
-        hypothesis_result[(e, d, c, m, s, 'neg_pvalue')] = correct_p['one_tail_neg'].loc[(e, d, c, m, s),'p-value']
+        hypothesis_result[(e, d, c, m, s, 'two_tail_pvalue')] = correct_p_vals['two_tail'].loc[(e, d, c, m, s),'p-value']
+        hypothesis_result[(e, d, c, m, s, 'pos_pvalue')] = correct_p_vals['one_tail_pos'].loc[(e, d, c, m, s),'p-value']
+        hypothesis_result[(e, d, c, m, s, 'neg_pvalue')] = correct_p_vals['one_tail_neg'].loc[(e, d, c, m, s),'p-value']
         pos = rejects['one_tail_pos'].loc[(e, d, c, m, s), 'reject']
         neg = rejects['one_tail_neg'].loc[(e, d, c, m, s), 'reject']
-        if pos:
+        sig = rejects['two_tail'].loc[(e, d, c, m, s), 'reject']
+
+        if sig and pos:
             hypothesis_result[(e, d, c, m, s, 'flag')] = 'P'
-        elif neg:
+        elif sig and neg:
             hypothesis_result[(e, d, c, m, s, 'flag')] = 'N'
         else:
             hypothesis_result[(e, d, c, m, s, 'flag')] = 'S'
-
-    # save_path = os.path.join(config.table_dir, 't_test', 'hypothesis_test.xlsx')
-    # save_hypothesis_test(t_test_results, rejects, save_path)
     return hypothesis_result
 
+"""Group and split the result """
 def split_clean_method(result):
     new_result = {}
     for (error, dataset, clean_method, model, scenario, comp_key), value in result.items():
@@ -252,51 +255,83 @@ def group_by_best_model_clean(result):
     result = utils.group_reduce_by_best_clean(result)
     return result    
 
-def analyze(result, save_dir, name, alpha=0.05, split_detect=True):
-    # compare by t-test and do multiple hypothesis test
-    t_test_comp = Compare(result, t_test, mixed_f1_acc)
+def elim_redundant_dim(relation, dims):
+    new_rel = {}
+    for k, v in relation.items():
+        new_key = tuple([k[i] for i in range(len(k)) if i not in dims])
+        new_rel[new_key] = v
+    return new_rel
+
+"""Populate relations"""
+def populate_relation(result, name, alphas=[0.05], split_detect=True, multiple_test_method='fdr_by'):
+    print("Populate relation", name)
+    # create save folder
+    save_dir = utils.makedirs([config.analysis_dir, name])
+    relation_dir = utils.makedirs([save_dir, 'relations'])
     metric_dir = utils.makedirs([save_dir, 'four_metrics'])
+
+    # get other attributes
+    attr_mean_acc = Compare(result, mean_acc, test_acc).compare_result       # attr: dirty_acc, clean_acc
+    attr_diff_acc = Compare(result, diff_acc, test_acc).compare_result       # attr: diff_acc
+    attr_mean_f1 = Compare(result, mean_f1, test_f1).compare_result          # attr: dirty_f1, clean_f1
+    attr_diff_f1 = Compare(result, diff_f1, test_f1).compare_result          # attr: diff_f1
+    attr_count = Compare(result, direct_count, mixed_f1_acc).compare_result  # attr: pos count, neg count, same count
+
+    # run t-test 
+    t_test_comp = Compare(result, t_test, mixed_f1_acc)
     t_test_comp.save_four_metrics(metric_dir)
-    hypothesis_result = hypothesis_test(t_test_comp.compare_result, alpha)
 
-    # show mean of acc
-    mean_acc_comp = Compare(result, mean_acc, test_acc)
+    # hypothesis test
+    for alpha in alphas:
+        # print(alpha)
+        # get attribute flag by multiple hypothesis test
+        attr_flag = hypothesis_test(t_test_comp.compare_result, alpha, multiple_test_method)
 
-    # show mean of f1
-    mean_f1_comp = Compare(result, mean_f1, test_f1)
+        # populate relation with all of attributes
+        relation = {**attr_flag, **attr_mean_acc, **attr_mean_f1, **attr_diff_acc, **attr_diff_f1, **attr_count}
 
-    # count directly
-    direct_count_comp = Compare(result, direct_count, mixed_f1_acc)
-    
-    # combine results
-    analysis = {**mean_acc_comp.compare_result, **mean_f1_comp.compare_result, **hypothesis_result, **direct_count_comp.compare_result}
-    if split_detect:
-        analysis = split_clean_method(analysis)
-        analysis_df = utils.dict_to_df(analysis, [0, 1, 2, 3, 4, 5], [6])
-    else:
-        analysis_df = utils.dict_to_df(analysis, [0, 1, 2, 3, 4], [5])
+        # split detect
+        if split_detect and name != "R3":
+            relation = split_clean_method(relation)
 
-    save_path = os.path.join(save_dir, '{}_analysis.csv'.format(name))
-    # analysis_df.to_csv(save_path, index_label=['error_type', 'dataset', 'clean_method', 'model', 'scenario'])
-    analysis_df.to_csv(save_path)
+        # eliminate redundant attribute for R2 and R3
 
-if __name__ == '__main__':
-    # save training result 
+        if name == "R2":
+            redundant_dims = [4] if split_detect else [3]
+            relation = elim_redundant_dim(relation, redundant_dims)
+        if name == "R3":
+            redundant_dims = [2, 3]
+            relation = elim_redundant_dim(relation, redundant_dims)
+        
+        # convert dict to df
+        n_key = len(list(relation.keys())[0])
+        relation_df = utils.dict_to_df(relation, list(range(n_key-1)), [n_key-1])
+
+        # save relation to csv and pkl
+        relation_csv_dir = utils.makedirs([relation_dir, 'csv'])
+        save_path = os.path.join(relation_csv_dir, '{}_{}.csv'.format(name, "{:.6f}".format(alpha).rstrip('0')))
+        relation_df.to_csv(save_path)
+
+        relation_pkl_dir = utils.makedirs([relation_dir, 'pkl'])
+        save_path = os.path.join(relation_pkl_dir, '{}_{}.pkl'.format(name, "{:.6f}".format(alpha).rstrip('0')))
+        utils.df_to_pickle(relation_df, save_path)
+
+def populate(alphas, save_training=False):
+    """Populate R1, R2 and R3"""
     result = utils.load_result(parse_key=True)
-    # save_dir = os.path.join(config.analysis_dir, "training_result")
-    # utils.result_to_table(result, save_dir)
 
-    #anaylze by mean performance
+    if save_training:
+        save_dir = os.path.join(config.analysis_dir, "training_result")
+        utils.result_to_table(result, save_dir)
+
+    # populate R1
     result_mean = group_by_mean(result)
-    save_dir = os.path.join(config.analysis_dir, "mean_analysis")
-    analyze(result_mean, save_dir, "mean")
+    populate_relation(result_mean, "R1", alphas=alphas)
 
-    # anaylze by best model, selected by max val acc
-    # result_best_model = group_by_best_model(result)
-    # save_dir = os.path.join(config.analysis_dir, "best_model_analysis")
-    # analyze(result_best_model, save_dir, "best_model") 
+    # populate R2
+    result_best_model = group_by_best_model(result)
+    populate_relation(result_best_model, "R2", alphas=alphas)
 
-    # analyze by best model and best clean method
-    # result_best_model_clean = group_by_best_model_clean(result_best_model)
-    # save_dir = os.path.join(config.analysis_dir, "best_model_clean_analysis")
-    # analyze(result_best_model_clean, save_dir, "best_model_clean", split_detect=False) 
+    # # populate R3
+    result_best_model_clean = group_by_best_model_clean(result_best_model)
+    populate_relation(result_best_model_clean, "R3", alphas=alphas)

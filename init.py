@@ -52,6 +52,7 @@ def reset(dataset):
     # delete dirty_train and dirty_test in raw folder
     utils.remove(utils.get_dir(dataset, 'raw', 'dirty_train.csv'))
     utils.remove(utils.get_dir(dataset, 'raw', 'dirty_test.csv'))
+    utils.remove(utils.get_dir(dataset, 'raw', 'dirty.csv'))
     utils.remove(utils.get_dir(dataset, 'raw', 'idx_train.csv'))
     utils.remove(utils.get_dir(dataset, 'raw', 'idx_test.csv'))
     utils.remove(utils.get_dir(dataset, 'raw', 'version.json'))
@@ -90,6 +91,10 @@ def init(dataset, test_ratio=0.3, seed=1, max_size=None):
     # save index
     save_path_pfx = utils.get_dir(dataset, 'raw', 'idx')
     utils.save_dfs(idx_train, idx_test, save_path_pfx)
+
+    # save dirty
+    # save_path = utils.get_dir(dataset, 'raw', 'dirty.csv')
+    # dirty.to_csv(save_path, index=False)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

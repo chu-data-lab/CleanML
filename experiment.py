@@ -1,3 +1,4 @@
+"""Run experiments"""
 from train import train_and_evaluate
 from preprocess import preprocess
 import numpy as np
@@ -6,9 +7,13 @@ import json
 import argparse
 import config
 import datetime
+from init import init
+from clean import clean
+import time
+import logging
 
-def one_experiment(dataset, error_type, train_file, model, seed, n_jobs=1):
-    """One experiment on the datase given an error type, a train file, a model and a seed
+def one_search_experiment(dataset, error_type, train_file, model, seed, n_jobs=1):
+    """One experiment on the datase given an error type, a train file, a model and a random search seed
         
     Args:
         dataset (dict): dataset dict in config.py
@@ -29,8 +34,8 @@ def one_experiment(dataset, error_type, train_file, model, seed, n_jobs=1):
     result = train_and_evaluate(X_train, y_train, X_test_list, y_test_list, test_files, model, n_jobs=n_jobs, seed=train_seed)
     return result
 
-def experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
-    """Run all experiments on one dataset.
+def one_split_experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
+    """Run experiments on one dataset for one split.
 
     Args:
         dataset (dict): dataset dict in config.py
@@ -59,19 +64,37 @@ def experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
                         continue
         
                     print("{} Processing {}".format(datetime.datetime.now(), key)) 
-                    res = one_experiment(dataset, error, train_file, model, seed, n_jobs=n_jobs)
+                    res = one_search_experiment(dataset, error, train_file, model, seed, n_jobs=n_jobs)
                     if not nosave:
                         utils.save_result(dataset['data_dir'], key, res)
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', default=None)
-    parser.add_argument('--n_retrain', type=int, default=3)
-    args = parser.parse_args()
+def experiment(datasets, log=False, n_jobs=1, nosave=False):
+    """Run expriments on all datasets for all splits"""
+    # set logger for experiments
+    if log:
+        logging.captureWarnings(True)
+        logging.basicConfig(filename='logging_{}.log'.format(datetime.datetime.now()), level=logging.DEBUG)
 
-    # get datasets and models
-    datasets = [utils.get_dataset(args.dataset)] if args.dataset is not None else config.datasets
-    
-    # run experiments for each dataset
+    # set seeds for experiments
+    np.random.seed(config.root_seed)
+    split_seeds = np.random.randint(10000, size=config.n_resplit)
+    experiment_seed = np.random.randint(10000)
+
+    # run experiments
     for dataset in datasets:
-        experiment(dataset, args.n_retrain) 
+        if log:
+            logging.debug("{}: Experiment on {}".format(datetime.datetime.now(), dataset['data_dir']))
+
+        for i, seed in enumerate(split_seeds):
+            if utils.check_completed(dataset, seed, experiment_seed):
+                print("Ignore {}-th experiment on {} that has been completed before.".format(i, dataset['data_dir']))
+                continue
+            tic = time.time()
+            init(dataset, seed=seed, max_size=config.max_size)
+            clean(dataset)
+            one_split_experiment(dataset, n_retrain=config.n_retrain, n_jobs=n_jobs, nosave=nosave, seed=experiment_seed)
+            toc = time.time()
+            t = (toc - tic) / 60
+            remaining = t*(len(split_seeds)-i-1) 
+            if log:
+                logging.debug("{}: {}-th experiment takes {} min. Estimated remaining time: {} min".format(datetime.datetime.now(), i, t, remaining))

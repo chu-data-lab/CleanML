@@ -68,37 +68,37 @@ def inject(dataset):
         Args:
             dataset (dict): dataset dict in config
     """
-        # create saving folder
-    save_dir = utils.get_dir(dataset, 'mislabel', create_folder=True)
+    # create saving folder
+    major_save_dir = utils.makedirs([config.data_dir, dataset["data_dir"] + "_major", 'raw'])
+    minor_save_dir = utils.makedirs([config.data_dir, dataset["data_dir"] + "_minor", 'raw'])
+    uniform_save_dir = utils.makedirs([config.data_dir, dataset["data_dir"] + "_uniform", 'raw'])
 
     # load clean data
-    if 'missing_values' in dataset['error_types']:
-        # if raw dataset has missing values, use dataset with mv deleted in missing value folder 
-        clean_path_pfx = utils.get_dir(dataset, 'missing_values', 'delete')
-    else:
-        clean_path_pfx = utils.get_dir(dataset, 'raw', 'dirty')
-    clean_train, clean_test, version = utils.load_dfs(dataset, clean_path_pfx, return_version=True)
-    
-    # save clean
-    clean_path_pfx = os.path.join(save_dir, 'clean')
-    utils.save_dfs(clean_train, clean_test, clean_path_pfx, version)
+    clean_path = utils.get_dir(dataset, 'raw', 'raw.csv')
+    clean = utils.load_df(dataset, clean_path)
+    clean = clean.dropna().reset_index()
 
+    major_clean_path = os.path.join(major_save_dir, 'clean.csv')
+    minor_clean_path = os.path.join(minor_save_dir, 'clean.csv')
+    uniform_clean_path = os.path.join(uniform_save_dir, 'clean.csv')
+    clean.to_csv(major_clean_path, index=False)
+    clean.to_csv(minor_clean_path, index=False)
+    clean.to_csv(uniform_clean_path, index=False)
 
     label = dataset['label']
+
     # uniform flip
-    uniform_train = uniform_class_noise(clean_train, label)
-    uniform_test = uniform_class_noise(clean_test, label)
-
+    uniform = uniform_class_noise(clean, label)
     # pairwise flip
-    major_train, minor_train = pairwise_class_noise(clean_train, label)
-    major_test, minor_test = pairwise_class_noise(clean_test, label)
+    major, minor = pairwise_class_noise(clean, label)
 
-    dirty_path_pfx = os.path.join(save_dir, 'dirty_uniform')
-    utils.save_dfs(uniform_train, uniform_test, dirty_path_pfx, version)
-    dirty_path_pfx = os.path.join(save_dir, 'dirty_major')
-    utils.save_dfs(major_train, major_test, dirty_path_pfx, version)
-    dirty_path_pfx = os.path.join(save_dir, 'dirty_minor')
-    utils.save_dfs(minor_train, minor_test, dirty_path_pfx, version)
+    major_raw_path = os.path.join(major_save_dir, 'raw.csv')
+    minor_raw_path = os.path.join(minor_save_dir, 'raw.csv')
+    uniform_raw_path = os.path.join(uniform_save_dir, 'raw.csv')
+    
+    major.to_csv(major_raw_path, index=False)
+    minor.to_csv(minor_raw_path, index=False)
+    uniform.to_csv(uniform_raw_path, index=False)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -106,9 +106,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # datasets to be inject, inject all datasets with error type mislabel if not specified
-    datasets = [utils.get_dataset(args.dataset)] if args.dataset is not None else config.datasets
-
+    datasets = [utils.get_dataset(args.dataset)] 
+    
     # clean datasets
     for dataset in datasets:
-        if 'mislabel' in dataset['error_types']:
-            inject(dataset)
+        inject(dataset)

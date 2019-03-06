@@ -24,6 +24,18 @@ def get_dataset(name):
         sys.exit()
     return dataset[0]
 
+def get_error(name):
+    """Get error dict in config.py given name
+
+    Args:
+        name (string): dataset name
+    """ 
+    error_type = [e for e in config.error_types if e['name'] == name]
+    if len(error_type) == 0:
+        print('Error type {} does not exist.'.format(name))
+        sys.exit()
+    return error_type[0]
+
 def get_model(name):
     """Get model dict in config.py given name
 
@@ -618,18 +630,3 @@ def group_reduce_by_best_clean(result):
 
     new_result = {**new_dirty, **new_clean}
     return new_result
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

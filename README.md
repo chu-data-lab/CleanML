@@ -30,7 +30,7 @@ The experimental results for each dataset will be saved in `/result` directory a
 To run analysis for populating relations described in the paper, unzip `result.zip` and execute the following command from the project home directory:
 
 ```
-python main.py --analysis [--alpha <name>]
+python main.py --run_analysis [--alpha <name>]
 ```
 
 #### Options:

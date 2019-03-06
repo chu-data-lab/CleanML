@@ -46,10 +46,10 @@ To add a new dataset, first, create a new folder with dataset name under `/data`
 .
 └── data
     └── new_dataset
-           └── raw
-                ├── raw.csv
-                ├── inconsistency_clean_raw.csv (for dataset with inconsistencies)
-                └── mislabel_clean_raw.csv (for dataset with mislabels)
+        └── raw
+            ├── raw.csv
+            ├── inconsistency_clean_raw.csv (for dataset with inconsistencies)
+            └── mislabel_clean_raw.csv (for dataset with mislabels)
 </pre>
 
 Then add a dictionary to `/schema/dataset.py` and append it to `datasets` array at the end of the file.<br> 

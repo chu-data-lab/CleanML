@@ -94,4 +94,4 @@ The class must contain two methods:<br>
 `clean(dirty_train, dirty_test)`: take in the dirty training set and dirty test set. Clean the error in the training set and test set. Return `(clean_train, indicator_train, clean_test, indicator_test)`, which are the clean version datasets and indicators that indicate the location of error. 
 
 ### Add new scenarios:
-We consider "BD" and "CD" scenarios in our paper. To investigate our scenarios, add scenarios to `/schema/scenarios.py`. <br>
+We consider "BD" and "CD" scenarios in our paper. To investigate our scenarios, add scenarios to `/schema/scenarios.py`.

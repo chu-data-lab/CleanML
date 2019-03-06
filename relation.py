@@ -27,8 +27,8 @@ class Compare(object):
 
         self.four_metrics = {}
         self.compare_result = {}
-        for error_type in ["missing_values", "outliers", "mislabel", "inconsistency", "duplicates"]:
-            self.compare_result[error_type], self.four_metrics[error_type] = self.compare_error(error_type)
+        for error_type in config.error_types:
+            self.compare_result[error_type['name']], self.four_metrics[error_type['name']] = self.compare_error(error_type['name'])
         
         # key order: error/clean_method/dataset/models/scenario/ [compare_keys...]
         self.compare_result = utils.flatten_dict(self.compare_result)
@@ -111,9 +111,9 @@ class Compare(object):
         return comparisons, metrics
 
     def save_four_metrics(self, save_dir):
-        for error_type in ["missing_values", "outliers", "mislabel", "inconsistency", "duplicates"]:
-            save_path = os.path.join(save_dir, "{}_four_metrics.xlsx".format(error_type))
-            utils.dfs_to_xls(self.four_metrics[error_type], save_path)
+        for error_type in config.error_types:
+            save_path = os.path.join(save_dir, "{}_four_metrics.xlsx".format(error_type['name']))
+            utils.dfs_to_xls(self.four_metrics[error_type['name']], save_path)
         flat_metrics = utils.flatten_dict(self.four_metrics)
 
 """Comparing method"""

@@ -64,6 +64,10 @@ label: the label of ML task.
 The following keys are optional:<br>
 ```yaml
 class_imbalance: whether the dataset is class imbalanced.
+categorical_variables: a list of categorical attributes.
+text_variables: a list of text attributes.
+key_columns: a list of key columns used for deduplication.
+drop_variables: a list of irrelevant attributes.
 ```
 ### Add new error types:
 To add a new error type, add a dictionary to `/schema/error_type.py` and append it to `error_types` array at the end of the file. <br>

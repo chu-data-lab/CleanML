@@ -495,7 +495,7 @@ def group(result, idx, keepdim=False):
             if x != old_key[idx]:
                 continue
 
-            # new key（eliminate the given dimension)
+            # new key (eliminate the given dimension)
             new_key = tuple([old_key[i] for i in range(len(old_key)) if i != idx])
 
             # new value 

@@ -76,7 +76,7 @@ def inject(dataset):
     # load clean data
     clean_path = utils.get_dir(dataset, 'raw', 'raw.csv')
     clean = utils.load_df(dataset, clean_path)
-    clean = clean.dropna().reset_index()
+    clean = clean.dropna().reset_index(drop=True)
 
     major_clean_path = os.path.join(major_save_dir, 'mislabel_clean_raw.csv')
     minor_clean_path = os.path.join(minor_save_dir, 'mislabel_clean_raw.csv')

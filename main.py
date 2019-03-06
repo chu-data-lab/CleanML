@@ -17,7 +17,7 @@ parser.add_argument('--cpu', default=1, type=int)
 parser.add_argument('--log', default=False, action='store_true')
 parser.add_argument('--dataset', default=None)
 parser.add_argument('--nosave', default=False, action='store_true')
-parser.add_argument('--alpha', action='append', default=0.05, type=float)
+parser.add_argument('--alpha', default=0.05, type=float)
 
 args = parser.parse_args()
 

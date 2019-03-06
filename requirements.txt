@@ -7,3 +7,4 @@ scipy==1.1.0
 xgboost==0.81
 statsmodels==0.9.0
 openpyxl==2.5.6 
+XlsxWriter==1.1.1 

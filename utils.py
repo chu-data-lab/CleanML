@@ -194,9 +194,7 @@ def get_train_files(error_type):
                      "clean_IQR_impute_mode_dummy", 
                      "clean_IF_impute_mode_dummy"]
     elif error_type == 'mislabel':
-        filenames = ["dirty_uniform", 
-                     "dirty_major",
-                     "dirty_minor",
+        filenames = ["dirty",
                      "clean"]
     else:
         filenames = ["dirty", "clean"]

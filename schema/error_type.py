@@ -16,6 +16,7 @@ missing_values = {
 
 outliers = {
     "name": "outliers",
+<<<<<<< HEAD
     "clean_methods": {"SD_impute_mean_dummy": OutlierCleaner(detect_method="SD", repairer=MVCleaner("impute", num="mean", cat="dummy")),
                       "SD_impute_mode_dummy": OutlierCleaner(detect_method="SD", repairer=MVCleaner("impute", num="mode", cat="dummy")),
                       "SD_impute_median_dummy": OutlierCleaner(detect_method="SD", repairer=MVCleaner("impute", num="median", cat="dummy")),
@@ -28,6 +29,20 @@ outliers = {
                       "IF_impute_mode_dummy": OutlierCleaner(detect_method="IF", repairer=MVCleaner("impute", num="mode", cat="dummy")),
                       "IF_impute_median_dummy": OutlierCleaner(detect_method="IF", repairer=MVCleaner("impute", num="median", cat="dummy")),
                       "IF_impute_delete": OutlierCleaner(detect_method="IF", repairer=MVCleaner("delete"))
+=======
+    "clean_methods": {"clean_SD_impute_mean_dummy": OutlierCleaner(detect_method="SD", repairer=MVCleaner("impute", num="mean", cat="dummy")),
+                      "clean_SD_impute_mode_dummy": OutlierCleaner(detect_method="SD", repairer=MVCleaner("impute", num="mode", cat="dummy")),
+                      "clean_SD_impute_median_dummy": OutlierCleaner(detect_method="SD", repairer=MVCleaner("impute", num="median", cat="dummy")),
+                      "clean_SD_delete": OutlierCleaner(detect_method="SD", repairer=MVCleaner("delete")),
+                      "clean_IQR_impute_mean_dummy": OutlierCleaner(detect_method="IQR", repairer=MVCleaner("impute", num="mean", cat="dummy")),
+                      "clean_IQR_impute_mode_dummy": OutlierCleaner(detect_method="IQR", repairer=MVCleaner("impute", num="mode", cat="dummy")),
+                      "clean_IQR_impute_median_dummy": OutlierCleaner(detect_method="IQR", repairer=MVCleaner("impute", num="median", cat="dummy")),
+                      "clean_IQR_delete": OutlierCleaner(detect_method="IQR", repairer=MVCleaner("delete")),
+                      "clean_IF_impute_mean_dummy": OutlierCleaner(detect_method="IF", repairer=MVCleaner("impute", num="mean", cat="dummy")),
+                      "clean_IF_impute_mode_dummy": OutlierCleaner(detect_method="IF", repairer=MVCleaner("impute", num="mode", cat="dummy")),
+                      "clean_IF_impute_median_dummy": OutlierCleaner(detect_method="IF", repairer=MVCleaner("impute", num="median", cat="dummy")),
+                      "clean_IF_delete": OutlierCleaner(detect_method="IF", repairer=MVCleaner("delete"))
+>>>>>>> e15611936ff0ca40875dd800821185b6e2bf3d02
                     }
 }
 

@@ -400,30 +400,3 @@ class OutlierHoloCleaner(object):
         clean_train = self.clean_train
         clean_test =self.clean_test
         return clean_train, indicator_train, clean_test, indicator_test
-
-# class AutoERCleaner2(object):
-#     """docstring for AutoERCleaner"""
-#     def __init__(self):
-#         super(AutoERCleaner, self).__init__()
-
-#     def fit(self, dataset, dirty_train):
-#         index_train_path = utils.get_dir(dataset, 'raw', 'idx_train.csv')
-#         index_test_path = utils.get_dir(dataset, 'raw', 'idx_test.csv')
-#         index_train = pd.read_csv(index_train_path).values.reshape(-1)
-#         index_test = pd.read_csv(index_test_path).values.reshape(-1)
-#         ind_path = utils.get_dir(dataset, 'raw', 'AutoER.csv')
-#         autoer_result = pd.read_csv(ind_path).values
-#         indicator = (autoer_result != -1)
-#         self.ind_train = pd.DataFrame(indicator[index_train, :], columns=["is_dup"])
-#         self.ind_test = pd.DataFrame(indicator[index_test, :], columns=["is_dup"])
-
-#     def repair(self, df, is_dup):
-#         not_dup = (is_dup.values == False)
-#         df_clean = df[not_dup]
-#         return df_clean
-
-#     def clean(self, dirty_train, dirty_test):
-#         clean_train = self.repair(dirty_train, self.ind_train)
-#         clean_test = self.repair(dirty_test, self.ind_test)
-#         return clean_train, self.ind_train, clean_test, self.ind_test
-

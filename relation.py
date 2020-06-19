@@ -343,8 +343,8 @@ def populate(alphas, save_training=False):
         utils.result_to_table(result, save_dir)
 
     # populate R1
-    result_mean = group_by_max(result)
-    populate_relation(result_mean, "R1", alphas=alphas)
+    result_vanilla = group_by_max(result)
+    populate_relation(result_vanilla, "R1", alphas=alphas)
 
     # populate R2
     result_best_model = group_by_best_model(result)

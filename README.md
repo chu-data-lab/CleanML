@@ -12,7 +12,7 @@ Joint Data Cleaning and Machine Learning [Experiments and Analysis]
 
 ## Basic Usage
 ### Run Experiments
-To run experiments, download and unzip the [datasets](https://www.dropbox.com/s/3sk13yuyukkomoc/CleanML-datasets.zip?dl=0). Place it under the project home directory and execute the following command from the project home directory:
+To run experiments, download and unzip the [datasets](https://www.dropbox.com/s/62xlcfsoykl2k7n/CleanML-datasets-2020.zip?dl=0). Place it under the project home directory and execute the following command from the project home directory:
 
 ```
 python3 main.py --run_experiments [--dataset <name>] [--cpu <num_cpu>] [--log]

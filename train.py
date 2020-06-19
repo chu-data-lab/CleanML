@@ -26,7 +26,7 @@ def parse_searcher(searcher):
     best_model = searcher.best_estimator_
     return best_model, best_params, train_acc, val_acc
 
-def train(X_train, y_train, estimator, param_grid, seed=1, n_jobs=1):
+def train(X_train, y_train, estimator, param_grid, seed=1, n_jobs=1, skip=False):
     """Train the model 
         
     Args:
@@ -38,10 +38,17 @@ def train(X_train, y_train, estimator, param_grid, seed=1, n_jobs=1):
         n_jobs (int): num of threads
     """
     np.random.seed(seed)
+
+    # cleamml 2020
+    if skip:
+        best_model = estimator
+        best_model.fit(X_train, y_train)
+        result = {}
+        return best_model, result
     
     # train and tune hyper parameter with 5-fold cross validation
     if param_grid is not None:
-        searcher = GridSearchCV(estimator, param_grid, cv=5, n_jobs=n_jobs, return_train_score=True, iid=False)
+        searcher = GridSearchCV(estimator, param_grid, cv=5, n_jobs=n_jobs, return_train_score=True)
         searcher.fit(X_train, y_train)
         best_model, best_params, train_acc, val_acc = parse_searcher(searcher)
     else: 
@@ -95,18 +102,24 @@ def get_fine_grid(model, best_param_coarse, n_jobs, N):
         param_grid = {model['hyperparams']: np.arange(low, high)}
     return param_grid
 
-def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
+def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1, hyperparams=None):
     np.random.seed(seed)
     coarse_param_seed, coarse_train_seed, fine_train_seed = np.random.randint(1000, size=3)
     fixed_params = model["fixed_params"]
     if "parallelable" in model.keys() and model['parallelable']:
         fixed_params["n_jobs"] = n_jobs
+
+    if hyperparams is not None:
+        if "hyperparams_type" in model and model["hyperparams_type"] == "int":
+            hyperparams[model["hyperparams"]] = int(hyperparams[model["hyperparams"]])
+        fixed_params.update(hyperparams)
+
     estimator = model["fn"](**fixed_params)
 
     # hyperparameter search
-    if "hyperparams" not in model.keys():
+    if "hyperparams" not in model.keys() or hyperparams is not None:
         # if no hyper parmeter, train directly
-        best_model, result = train(X_train, y_train, estimator, None, n_jobs=n_jobs, seed=coarse_train_seed)
+        best_model, result = train(X_train, y_train, estimator, None, n_jobs=n_jobs, seed=coarse_train_seed, skip=(hyperparams is not None))
     else:
         # coarse random search
         param_grid = get_coarse_grid(model, coarse_param_seed, n_jobs, len(y_train))
@@ -132,7 +145,7 @@ def hyperparam_search(X_train, y_train, model, n_jobs=1, seed=1):
 
     return best_model, result
 
-def train_and_evaluate(X_train, y_train, X_test_list, y_test_list, test_files, model, n_jobs=1, seed=1):
+def train_and_evaluate(X_train, y_train, X_test_list, y_test_list, test_files, model, n_jobs=1, seed=1, hyperparams=None):
     """Search hyperparameters and evaluate
         
     Args:
@@ -145,7 +158,7 @@ def train_and_evaluate(X_train, y_train, X_test_list, y_test_list, test_files, m
         seed (int): seed for training
         n_jobs (int): num of threads
     """
-    best_model, result_train = hyperparam_search(X_train, y_train, model, n_jobs, seed)
+    best_model, result_train = hyperparam_search(X_train, y_train, model, n_jobs, seed, hyperparams)
     result_test = evaluate(best_model, X_test_list, y_test_list, test_files)
     result = {**result_train, **result_test}
     return result

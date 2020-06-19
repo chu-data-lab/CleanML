@@ -41,6 +41,7 @@ def split(data, test_ratio, seed, max_size=None):
     test = data.iloc[idx_test]
     idx_train = pd.DataFrame(idx_train, columns=["index"])
     idx_test = pd.DataFrame(idx_test, columns=["index"])
+
     return train, test, idx_train, idx_test
 
 def reset(dataset):

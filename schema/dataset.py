@@ -29,7 +29,7 @@ Marketing = {
 
 Airbnb = {
     "data_dir": "Airbnb",
-    "error_types": ["missing_values", "outliers", "duplicates"],
+    "error_types": ["duplicates", "outliers", "missing_values"],
     "label": 'Rating',
     "categorical_variables": ['Rating'],
     "ml_task": "classification",
@@ -72,7 +72,7 @@ Restaurant = {
 
 Credit = {
     "data_dir": "Credit",
-    "error_types": ["missing_values", "outliers"],
+    "error_types": ["outliers", "missing_values"],
     "label": "SeriousDlqin2yrs",
     "categorical_variables":["SeriousDlqin2yrs"],
     "ml_task": "classification",
@@ -185,9 +185,82 @@ EEG_uniform = {
     "ml_task": "classification"
 }
 
+Titanic_uniform = {
+    "data_dir": "Titanic_uniform",
+    "error_types": ["mislabel"],
+    "drop_variables": ['PassengerId', 'Name'],
+    "label": "Survived",
+    "categorical_variables":["Survived"],
+    "ml_task": "classification"
+}
+
+Titanic_major = {
+    "data_dir": "Titanic_major",
+    "error_types": ["mislabel"],
+    "drop_variables": ['PassengerId', 'Name'],
+    "label": "Survived",
+    "categorical_variables":["Survived"],
+    "ml_task": "classification"
+}
+
+Titanic_minor = {
+    "data_dir": "Titanic_minor",
+    "error_types": ["mislabel"],
+    "drop_variables": ['PassengerId', 'Name'],
+    "label": "Survived",
+    "categorical_variables":["Survived"],
+    "ml_task": "classification"
+}
+
+Marketing_uniform = {
+    "data_dir": "Marketing_uniform",
+    "error_types": ["mislabel"],
+    "label": 'Income',
+    "ml_task": "classification"
+}
+
+Marketing_minor = {
+    "data_dir": "Marketing_minor",
+    "error_types": ["mislabel"],
+    "label": 'Income',
+    "ml_task": "classification"
+}
+
+Marketing_major = {
+    "data_dir": "Marketing_major",
+    "error_types": ["mislabel"],
+    "label": 'Income',
+    "ml_task": "classification"
+}
+Credit_uniform = {
+    "data_dir": "Credit_uniform",
+    "error_types": ["mislabel"],
+    "label": "SeriousDlqin2yrs",
+    "categorical_variables":["SeriousDlqin2yrs"],
+    "ml_task": "classification",
+    "class_imbalance":True
+}
+Credit_major = {
+    "data_dir": "Credit_major",
+    "error_types": ["mislabel"],
+    "label": "SeriousDlqin2yrs",
+    "categorical_variables":["SeriousDlqin2yrs"],
+    "ml_task": "classification",
+    "class_imbalance":True
+}
+Credit_minor = {
+    "data_dir": "Credit_minor",
+    "error_types": ["mislabel"],
+    "label": "SeriousDlqin2yrs",
+    "categorical_variables":["SeriousDlqin2yrs"],
+    "ml_task": "classification",
+    "class_imbalance":True
+}
+
 # domain of dataset 
 datasets = [KDD, Credit, Airbnb, USCensus, EEG, Titanic, 
             Marketing, Sensor, Movie, Restaurant, Citation, 
             Company, University, KDD_uniform, KDD_minor, KDD_major,
             USCensus_uniform, USCensus_major, USCensus_minor,
-            EEG_uniform, EEG_minor, EEG_major]
+            EEG_uniform, EEG_minor, EEG_major, Titanic_uniform, Titanic_minor, Titanic_major,
+            Marketing_uniform, Marketing_major, Marketing_minor, Credit_uniform, Credit_major, Credit_minor]

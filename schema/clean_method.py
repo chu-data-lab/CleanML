@@ -151,7 +151,7 @@ def IQR(x, k=1.5):
 
 def IF(x, contamination=0.01):
     # Isolation Forest (Univariate)
-    IF = IsolationForest(contamination=contamination, behaviour='new')
+    IF = IsolationForest(contamination=contamination)
     IF.fit(x.reshape(-1, 1))
     return lambda y: (IF.predict(y.reshape(-1, 1)) == -1)
 
@@ -242,3 +242,188 @@ class MislabelCleaner(object):
         indicator_train = pd.DataFrame(np.any(self.clean_train.values != dirty_train.values, axis=1), columns=['indicator'])
         indicator_test = pd.DataFrame(np.any(self.clean_test.values != dirty_test.values, axis=1), columns=['indicator'])
         return self.clean_train, indicator_train, self.clean_test, indicator_test
+
+class AutoERCleaner(object):
+    """docstring for AutoERCleaner"""
+    def __init__(self):
+        super(AutoERCleaner, self).__init__()
+
+    def fit(self, dataset, dirty_train):
+        index_train_path = utils.get_dir(dataset, 'raw', 'idx_train.csv')
+        index_test_path = utils.get_dir(dataset, 'raw', 'idx_test.csv')
+        dirty_train_path = utils.get_dir(dataset, 'raw', 'dirty_train.csv')
+        dirty_test_path = utils.get_dir(dataset, 'raw', 'dirty_test.csv')
+
+        index_train = pd.read_csv(index_train_path).values.reshape(-1)
+        index_test = pd.read_csv(index_test_path).values.reshape(-1)
+        ind_path = utils.get_dir(dataset, 'raw', 'AutoER.csv')
+
+        autoer_result = pd.read_csv(ind_path).values.reshape(-1)
+
+        ind_train = autoer_result[index_train]
+        ind_test = autoer_result[index_test]
+
+        dirty_train = pd.read_csv(dirty_train_path)
+        dirty_test = pd.read_csv(dirty_test_path)
+
+        train_mv = dirty_train.isnull().values.any(axis=1)
+        test_mv = dirty_test.isnull().values.any(axis=1)
+
+        ind_train = ind_train[train_mv == False]
+        ind_test = ind_test[test_mv == False]
+
+        ind_train = pd.DataFrame(ind_train.reshape(-1, 1), columns=["label"])
+        ind_test = pd.DataFrame(ind_test.reshape(-1, 1), columns=["label"])
+
+        self.ind_train = ind_train.duplicated(keep="first").values
+        self.ind_test = ind_test.duplicated(keep="first").values
+
+    def repair(self, df, is_dup):
+        df_clean = df[is_dup == False]
+        return df_clean
+
+    def clean(self, dirty_train, dirty_test):
+        clean_train = self.repair(dirty_train, self.ind_train)
+        clean_test = self.repair(dirty_test, self.ind_test)
+        ind_train = pd.DataFrame(self.ind_train, columns=["is_dup"])
+        ind_test = pd.DataFrame(self.ind_test, columns=["is_dup"])
+
+        return clean_train, ind_train, clean_test, ind_test
+
+class FDCleaner(object):
+    def __init__(self):
+        super(FDCleaner, self).__init__()
+
+    def fit(self, dataset, dirty_train):
+        dirty_raw_path = utils.get_dir(dataset, 'raw', 'raw.csv')
+        clean_raw_path = utils.get_dir(dataset, 'raw', 'FD.csv')
+        if not os.path.exists(clean_raw_path):
+            print("Must provide clean version of raw data for cleaning inconsistency")
+            sys.exit(1)
+        dirty_raw = utils.load_df(dataset, dirty_raw_path)
+        clean_raw = utils.load_df(dataset, clean_raw_path)
+
+        N, m = dirty_raw.shape
+        dirty_raw = dirty_raw.values
+        clean_raw = clean_raw.values
+        mask = (dirty_raw != clean_raw)
+        dirty = dirty_raw[mask]
+        clean = clean_raw[mask]
+        self.incon_dict = dict(zip(dirty, clean))
+
+    def clean_df(self, df):
+        df_clean = df.copy()
+        N, m = df_clean.shape
+        indicator = np.zeros_like(df_clean).astype(bool)
+
+        for i in range(N):
+            for j in range(m):
+                if df_clean.iloc[i, j] in self.incon_dict.keys():
+                    df_clean.iloc[i, j] = self.incon_dict[df_clean.iloc[i, j]]
+                    indicator[i, j] = True
+        indicator = pd.DataFrame(indicator, columns=df.columns)
+        return df_clean, indicator
+
+    def clean(self, dirty_train, dirty_test):
+        clean_train, indicator_train = self.clean_df(dirty_train)
+        clean_test, indicator_test = self.clean_df(dirty_test)
+        return clean_train, indicator_train, clean_test, indicator_test
+
+class MVHoloCleaner(object):
+    def __init__(self):
+        self.tag = "impute_holoclean"
+   
+    def detect(self, df):
+        return df.isnull()
+
+    def fit(self, dataset, df):
+        clean_raw_path = utils.get_dir(dataset, 'raw', 'Holoclean_mv_clean.csv')
+        clean_raw = pd.read_csv(clean_raw_path)
+
+        index_train_path = utils.get_dir(dataset, 'raw', 'idx_train.csv')
+        index_test_path = utils.get_dir(dataset, 'raw', 'idx_test.csv')
+        index_train = pd.read_csv(index_train_path).values.reshape(-1)
+        index_test = pd.read_csv(index_test_path).values.reshape(-1)
+
+        self.clean_train = clean_raw.iloc[index_train, :]
+        self.clean_test = clean_raw.iloc[index_test, :]
+
+    def clean(self, dirty_train, dirty_test):
+        indicator_train = self.detect(dirty_train)
+        indicator_test = self.detect(dirty_test)
+
+        clean_train = self.clean_train
+        clean_test =self.clean_test
+        return clean_train, indicator_train, clean_test, indicator_test
+
+class OutlierHoloCleaner(object):
+    def __init__(self):
+        self.tag = "impute_holoclean"
+
+    def fit(self, dataset, df):
+        clean_raw_path = utils.get_dir(dataset, 'raw', 'Holoclean_outlier_clean.csv')
+        index_train_path = utils.get_dir(dataset, 'raw', 'idx_train.csv')
+        index_test_path = utils.get_dir(dataset, 'raw', 'idx_test.csv')
+
+        index_train = pd.read_csv(index_train_path).values.reshape(-1)
+        index_test = pd.read_csv(index_test_path).values.reshape(-1)
+        clean_raw = pd.read_csv(clean_raw_path)
+
+        if 'missing_values' in dataset['error_types']:
+            dirty_train = pd.read_csv(utils.get_dir(dataset, 'raw', 'dirty_train.csv'))
+            dirty_test = pd.read_csv(utils.get_dir(dataset, 'raw', 'dirty_test.csv'))
+            raw = pd.read_csv(utils.get_dir(dataset, 'raw', 'raw.csv'))
+            raw_mv_rows = raw.isnull().values.any(axis=1)
+            train_mv_rows = dirty_train.isnull().values.any(axis=1)
+            test_mv_rows = dirty_test.isnull().values.any(axis=1)
+
+            old_index = np.arange(len(raw))[raw_mv_rows == False]
+            new_index = np.arange(len(raw) - sum(raw_mv_rows))
+            index_map = {}
+
+            for o, n in zip(old_index, new_index):
+                index_map[o] = n
+
+            index_train_no_mv = index_train[train_mv_rows == False]
+            index_test_no_mv = index_test[test_mv_rows == False]
+
+            index_train = [index_map[i] for i in index_train_no_mv]
+            index_test = [index_map[i] for i in index_test_no_mv]
+
+        self.clean_train = clean_raw.iloc[index_train, :]
+        self.clean_test = clean_raw.iloc[index_test, :]
+
+    def clean(self, dirty_train, dirty_test):
+        indicator_train = pd.DataFrame(dirty_train.values != self.clean_train.values, columns=dirty_train.columns)
+        indicator_test = pd.DataFrame(dirty_test.values != self.clean_test.values, columns=dirty_train.columns)
+
+        clean_train = self.clean_train
+        clean_test =self.clean_test
+        return clean_train, indicator_train, clean_test, indicator_test
+
+# class AutoERCleaner2(object):
+#     """docstring for AutoERCleaner"""
+#     def __init__(self):
+#         super(AutoERCleaner, self).__init__()
+
+#     def fit(self, dataset, dirty_train):
+#         index_train_path = utils.get_dir(dataset, 'raw', 'idx_train.csv')
+#         index_test_path = utils.get_dir(dataset, 'raw', 'idx_test.csv')
+#         index_train = pd.read_csv(index_train_path).values.reshape(-1)
+#         index_test = pd.read_csv(index_test_path).values.reshape(-1)
+#         ind_path = utils.get_dir(dataset, 'raw', 'AutoER.csv')
+#         autoer_result = pd.read_csv(ind_path).values
+#         indicator = (autoer_result != -1)
+#         self.ind_train = pd.DataFrame(indicator[index_train, :], columns=["is_dup"])
+#         self.ind_test = pd.DataFrame(indicator[index_test, :], columns=["is_dup"])
+
+#     def repair(self, df, is_dup):
+#         not_dup = (is_dup.values == False)
+#         df_clean = df[not_dup]
+#         return df_clean
+
+#     def clean(self, dirty_train, dirty_test):
+#         clean_train = self.repair(dirty_train, self.ind_train)
+#         clean_test = self.repair(dirty_test, self.ind_test)
+#         return clean_train, self.ind_train, clean_test, self.ind_test
+

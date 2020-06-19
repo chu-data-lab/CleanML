@@ -198,6 +198,7 @@ def hypothesis_test(t_test_results, alpha=0.05, multiple_test_method='fdr_by'):
     test_types = ['two_tail', 'one_tail_pos','one_tail_neg']
     pvals = [t_test_results_df.loc[:, (test_type, 'p-value')].values for test_type in test_types]
     pvals = np.concatenate(pvals, axis=0)
+    print("# hypothesis:", len(pvals))
     rej, cor_p, m0, alpha_stages = multipletests(pvals, method=multiple_test_method, alpha=alpha)
     # print(np.max(pvals[rej]), np.max(cor_p[rej]))
     rej = np.split(rej, 3)
@@ -242,6 +243,11 @@ def group_by_mean(result):
     result = utils.reduce_by_mean(result)
     return result
 
+def group_by_max(result):
+    result = utils.group(result, 5)
+    result = utils.reduce_by_max_val(result)
+    return result
+
 def group_by_best_model(result):
     # select best model by max val acc
     result = utils.group(result, 5)
@@ -250,9 +256,9 @@ def group_by_best_model(result):
     result = utils.reduce_by_max_val(result, dim=4, dim_name="model")
     return result
 
-def group_by_best_model_clean(result):
+def group_by_best_model_clean(result_best_model):
     # select best model by max val acc
-    result = utils.group_reduce_by_best_clean(result)
+    result = utils.group_reduce_by_best_clean(result_best_model)
     return result    
 
 def elim_redundant_dim(relation, dims):
@@ -310,7 +316,19 @@ def populate_relation(result, name, alphas=[0.05], split_detect=True, multiple_t
         # save relation to csv and pkl
         relation_csv_dir = utils.makedirs([relation_dir, 'csv'])
         save_path = os.path.join(relation_csv_dir, '{}_{}.csv'.format(name, "{:.6f}".format(alpha).rstrip('0')))
-        relation_df.to_csv(save_path)
+
+        relation_df = relation_df.reset_index()
+        
+        if name == "R1":
+            relation_df.rename(columns={"level_0": "error_type", "level_1":"dataset", "level_2": "detect_method", 
+                                        "level_3": "repair_method", "level_4": "model", "level_5": "scenario"}, inplace=True)
+        elif name == "R2":
+            relation_df.rename(columns={"level_0": "error_type", "level_1":"dataset", "level_2": "detect_method", 
+                                        "level_3": "repair_method", "level_4": "scenario"}, inplace=True)
+        else:
+            relation_df.rename(columns={"level_0": "error_type", "level_1":"dataset", "level_2": "scenario"}, inplace=True)
+
+        relation_df.to_csv(save_path, index=False)
 
         relation_pkl_dir = utils.makedirs([relation_dir, 'pkl'])
         save_path = os.path.join(relation_pkl_dir, '{}_{}.pkl'.format(name, "{:.6f}".format(alpha).rstrip('0')))
@@ -325,7 +343,7 @@ def populate(alphas, save_training=False):
         utils.result_to_table(result, save_dir)
 
     # populate R1
-    result_mean = group_by_mean(result)
+    result_mean = group_by_max(result)
     populate_relation(result_mean, "R1", alphas=alphas)
 
     # populate R2

@@ -12,7 +12,7 @@ from clean import clean
 import time
 import logging
 
-def one_search_experiment(dataset, error_type, train_file, model, seed, n_jobs=1):
+def one_search_experiment(dataset, error_type, train_file, model, seed, n_jobs=1, hyperparams=None, skip_test_files=[]):
     """One experiment on the datase given an error type, a train file, a model and a random search seed
         
     Args:
@@ -30,11 +30,13 @@ def one_search_experiment(dataset, error_type, train_file, model, seed, n_jobs=1
     X_train, y_train, X_test_list, y_test_list, test_files = \
         preprocess(dataset, error_type, train_file, normalize=True, down_sample_seed=down_sample_seed)
 
+    test_files = list(set(test_files).difference(set(skip_test_files)))   
+
     # train and evaluate
-    result = train_and_evaluate(X_train, y_train, X_test_list, y_test_list, test_files, model, n_jobs=n_jobs, seed=train_seed)
+    result = train_and_evaluate(X_train, y_train, X_test_list, y_test_list, test_files, model, n_jobs=n_jobs, seed=train_seed, hyperparams=hyperparams)
     return result
 
-def one_split_experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
+def one_split_experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True, error_type=None):
     """Run experiments on one dataset for one split.
 
     Args:
@@ -50,9 +52,13 @@ def one_split_experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
 
     # load result dict
     result = utils.load_result(dataset['data_dir'])
+    result2019 = utils.load_result2019(dataset['data_dir'])
 
     # run experiments
     for error in dataset["error_types"]:
+        if error_type is not None and error != error_type:
+            continue
+
         for train_file in utils.get_train_files(error):
             for model in config.models:
                 for seed in seeds:
@@ -62,17 +68,28 @@ def one_split_experiment(dataset, n_retrain=5, seed=1, n_jobs=1, nosave=True):
                     if key in result.keys():
                         print("Ignore experiment {} that has been completed before.".format(key))
                         continue
+
+                    if key in result2019.keys():
+                        hyperparams = result2019[key]["best_params"]
+                        skip_test_files = [k.rstrip("_test_acc") for k in result2019[key].keys() if "_test_acc" in k]
+                    else:
+                        hyperparams = None
+                        skip_test_files = []
         
                     print("{} Processing {}".format(datetime.datetime.now(), key)) 
-                    res = one_search_experiment(dataset, error, train_file, model, seed, n_jobs=n_jobs)
+                    res = one_search_experiment(dataset, error, train_file, model, seed, n_jobs=n_jobs, hyperparams=hyperparams, skip_test_files=skip_test_files)
+                    
+                    if key in result2019.keys():
+                        res = {**result2019[key], **res}
+
                     if not nosave:
                         utils.save_result(dataset['data_dir'], key, res)
 
-def experiment(datasets, log=False, n_jobs=1, nosave=False):
+def experiment(datasets, log=False, n_jobs=1, nosave=False, error_type=None, arg_seeds=None):
     """Run expriments on all datasets for all splits"""
     # set logger for experiments
     if log:
-        logging.captureWarnings(True)
+        logging.captureWarnings(False)
         logging.basicConfig(filename='logging_{}.log'.format(datetime.datetime.now()), level=logging.DEBUG)
 
     # set seeds for experiments
@@ -86,13 +103,18 @@ def experiment(datasets, log=False, n_jobs=1, nosave=False):
             logging.debug("{}: Experiment on {}".format(datetime.datetime.now(), dataset['data_dir']))
 
         for i, seed in enumerate(split_seeds):
+            if arg_seeds is not None:
+                if i not in arg_seeds:
+                    continue
+
             if utils.check_completed(dataset, seed, experiment_seed):
                 print("Ignore {}-th experiment on {} that has been completed before.".format(i, dataset['data_dir']))
                 continue
+
             tic = time.time()
             init(dataset, seed=seed, max_size=config.max_size)
-            clean(dataset)
-            one_split_experiment(dataset, n_retrain=config.n_retrain, n_jobs=n_jobs, nosave=nosave, seed=experiment_seed)
+            clean(dataset, error_type)
+            one_split_experiment(dataset, n_retrain=config.n_retrain, n_jobs=n_jobs, nosave=nosave, seed=experiment_seed, error_type=error_type)
             toc = time.time()
             t = (toc - tic) / 60
             remaining = t*(len(split_seeds)-i-1) 

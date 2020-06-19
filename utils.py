@@ -171,33 +171,46 @@ def get_train_files(error_type):
         error_type (string): missing_values/outliers/mislabel/duplicates/inconsistency
     """
 
+    error_dict = [e for e in config.error_types if e["name"] == error_type][0]
     if error_type == 'missing_values':
-        filenames = ["delete", 
-                    "impute_mean_mode", 
-                    "impute_mean_dummy", 
-                    "impute_median_mode", 
-                    "impute_median_dummy", 
-                    "impute_mode_mode", 
-                    "impute_mode_dummy"]
-    elif error_type == 'outliers':
-        filenames = ["dirty", 
-                     "clean_SD_delete", 
-                     "clean_IF_delete", 
-                     "clean_IQR_delete", 
-                     "clean_SD_impute_mean_dummy", 
-                     "clean_IQR_impute_mean_dummy", 
-                     "clean_IF_impute_mean_dummy", 
-                     "clean_SD_impute_median_dummy",
-                     "clean_IQR_impute_median_dummy", 
-                     "clean_IF_impute_median_dummy",
-                     "clean_SD_impute_mode_dummy",
-                     "clean_IQR_impute_mode_dummy", 
-                     "clean_IF_impute_mode_dummy"]
-    elif error_type == 'mislabel':
-        filenames = ["dirty",
-                     "clean"]
+        filenames = list(error_dict["clean_methods"].keys())
     else:
-        filenames = ["dirty", "clean"]
+        filenames = ["dirty"] + list(error_dict["clean_methods"].keys())
+
+    # if error_type == 'missing_values':
+    #     filenames = [
+    #                 "delete", 
+    #                 "impute_holoclean",
+    #                 "impute_mean_mode", 
+    #                 "impute_mean_dummy", 
+    #                 "impute_median_mode", 
+    #                 "impute_median_dummy", 
+    #                 "impute_mode_mode", 
+    #                 "impute_mode_dummy"]
+    # elif error_type == 'outliers':
+    #     filenames = ["dirty", 
+    #                  "clean_HC_impute_holoclean",
+    #                  "clean_SD_delete", 
+    #                  "clean_IF_delete", 
+    #                  "clean_IQR_delete", 
+    #                  "clean_SD_impute_mean_dummy", 
+    #                  "clean_IQR_impute_mean_dummy", 
+    #                  "clean_IF_impute_mean_dummy", 
+    #                  "clean_SD_impute_median_dummy",
+    #                  "clean_IQR_impute_median_dummy", 
+    #                  "clean_IF_impute_median_dummy",
+    #                  "clean_SD_impute_mode_dummy",
+    #                  "clean_IQR_impute_mode_dummy", 
+    #                  "clean_IF_impute_mode_dummy"]
+    # elif error_type == 'mislabel':
+    #     filenames = ["dirty",
+    #                  "clean"]
+    # elif error_type == 'duplicates':
+    #     filenames = ["dirty", "clean", "AutoER"]
+    # elif error_type == "inconsistency":
+    #     filenames = ["dirty", "clean", "FD"]
+    # else:
+    #     filenames = ["dirty", "clean"]
     return filenames
     
 def get_test_files(error_type, train_file):
@@ -217,21 +230,11 @@ def get_test_files(error_type, train_file):
             return get_train_files(error_type)
         else:
             return ["delete", train_file]
-
-    elif error_type == "mislabel":
-        if train_file == "clean":
-            return get_train_files(error_type)
-        else:
-            return ["clean", train_file]
-
-    elif error_type == "outliers":
+    else:
         if train_file == "dirty":
             return get_train_files(error_type)
         else:
             return ["dirty", train_file]
-            
-    else:
-        return ["dirty", "clean"]
 
 def check_completed(dataset, split_seed, experiment_seed):
     """Check whether all experiments for the dataset with split_seed have been completed
@@ -245,6 +248,7 @@ def check_completed(dataset, split_seed, experiment_seed):
     result = load_result(dataset['data_dir'])
     np.random.seed(experiment_seed)
     seeds = np.random.randint(10000, size=config.n_retrain)
+
     for error in dataset['error_types']:
         for model in config.models:
             for train_file in get_train_files(error):
@@ -285,6 +289,33 @@ def load_result(dataset_name=None, parse_key=False):
 
     return result
 
+def load_result2019(dataset_name=None, parse_key=False):
+    """Load result of one dataset or all datasets (if no argument) from json to dict
+
+    Args:
+        dataset_name (string): dataset name. If not specified, load results of all datasets.
+        parse_key (bool): whether convert key from string to tuple
+    """
+    if dataset_name is None:
+        files = [file for file in os.listdir(config.result_dir) if file.endswith('_result.json')]
+        result_path = [os.path.join("result2019", file) for file in files]
+    else:
+        result_path = [os.path.join("result2019", '{}_result.json'.format(dataset_name))]
+
+    result = {}
+    for path in result_path:
+        if os.path.exists(path):
+            result.update(json.load(open(path, 'r')))
+
+    if parse_key:
+        new_result = {}
+        for key, value in result.items():
+            new_key = tuple(key.split('/'))
+            new_result[new_key] = value
+        result = new_result
+
+    return result
+
 def save_result(dataset_name, key, res):
     """Save result to json
 
@@ -298,7 +329,7 @@ def save_result(dataset_name, key, res):
     result_path = os.path.join(config.result_dir, '{}_result.json'.format(dataset_name))
     if not os.path.exists(config.result_dir):
         os.makedirs(config.result_dir)
-    json.dump(result, open(result_path, 'w'))
+    json.dump(result, open(result_path, 'w'), indent=4)
 
 def dict_to_df(dic, row_keys_idx, col_keys_idx):
     """Convert dict to data frame
@@ -568,6 +599,12 @@ def reduce_by_max_val(result, dim=None, dim_name=None):
 
     return new_result
 
+def get_dirty_clean_train_files(error_type):
+    files = get_train_files(error_type)
+    dirty_file = files[0]
+    clean_file = files[1:]
+    return dirty_file, clean_file
+
 def group_reduce_by_best_clean(result):
     """Group by clean method and then reduce a list of results into a single result by the result corresponding to the best val_acc
         
@@ -578,23 +615,33 @@ def group_reduce_by_best_clean(result):
     """
     dirty = {}
     clean = {}
+
     for k, v in result.items():
+        error_type = k[2]
+        dirty_file, clean_file = get_dirty_clean_train_files(error_type)
+
         train_file = k[3]
-        if train_file[0:5] == "dirty" or train_file[0:5] == "delet":
+        if train_file in dirty_file:
             dirty[k] = v
         else:
             new_v = {}
+
             for vk, vv in v.items():
-                vk_list = vk.split('_')
-                if vk_list[0] in ['clean', 'impute']:
-                    new_vk = '_'.join([vk_list[0], vk_list[-2], vk_list[-1]])
-                else:
-                    new_vk = vk                
-                
+                new_vk = vk
+
+                for c in clean_file:
+                    if c in vk:
+                        if error_type == "missing_values":
+                            new_vk = new_vk.replace(c, "impute")
+                        else:
+                            new_vk = new_vk.replace(c, "clean")
+                        break
+
                 new_v[new_vk] = vv
             clean[k] = new_v
 
     clean = group(clean, 3, keepdim=True)
+
     clean = reduce_by_max_val(clean, dim=3, dim_name="clean")
 
     new_clean = {}

@@ -2,11 +2,8 @@
 
 This is the CleanML Benchmark for Joint Data Cleaning and Machine Learning. 
 
-The codebase is located in: https://github.com/chu-data-lab/CleanML
-
 The details of the benchmark methodology and design are described in the paper:
 [CleanML: A Study for Evaluating the Impact of Data Cleaning on ML Classification Tasks](https://arxiv.org/pdf/1904.09483.pdf)
-
 
 
 ## Basic Usage

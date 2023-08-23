@@ -32,7 +32,7 @@ outliers = {
 
 mislabel = {
     "name": "mislabel",
-    "clean_methods": {"clean": MislabelCleaner()}
+    "clean_methods": {"cleanlab": MislabelCleaner()}
 }
 
 duplicates = {

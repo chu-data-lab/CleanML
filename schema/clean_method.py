@@ -134,6 +134,44 @@ class InconsistencyCleaner(object):
         clean_test, indicator_test = self.clean_df(dirty_test)
         return clean_train, indicator_train, clean_test, indicator_test
 
+class InconsistencyHumanCleaner(object):
+    def __init__(self):
+        super(InconsistencyHumanCleaner, self).__init__()
+
+    def fit(self, dataset, dirty_train):
+        dirty_raw_path = utils.get_dir(dataset, 'raw', 'raw.csv')
+        clean_raw_path = utils.get_dir(dataset, 'raw', 'inconsistency_human-clean_raw.csv')
+        if not os.path.exists(clean_raw_path):
+            print("Must provide clean version of raw data for cleaning inconsistency")
+            sys.exit(1)
+        dirty_raw = utils.load_df(dataset, dirty_raw_path)
+        clean_raw = utils.load_df(dataset, clean_raw_path)
+        N, m = dirty_raw.shape
+        dirty_raw = dirty_raw.values
+        clean_raw = clean_raw.values
+        mask = (dirty_raw != clean_raw)
+        dirty = dirty_raw[mask]
+        clean = clean_raw[mask]
+        self.incon_dict = dict(zip(dirty, clean))
+
+    def clean_df(self, df):
+        df_clean = df.copy()
+        N, m = df_clean.shape
+        indicator = np.zeros_like(df_clean).astype(bool)
+
+        for i in range(N):
+            for j in range(m):
+                if df_clean.iloc[i, j] in self.incon_dict.keys():
+                    df_clean.iloc[i, j] = self.incon_dict[df_clean.iloc[i, j]]
+                    indicator[i, j] = True
+        indicator = pd.DataFrame(indicator, columns=df.columns)
+        return df_clean, indicator
+
+    def clean(self, dirty_train, dirty_test):
+        clean_train, indicator_train = self.clean_df(dirty_train)
+        clean_test, indicator_test = self.clean_df(dirty_test)
+        return clean_train, indicator_train, clean_test, indicator_test
+
 def SD(x, nstd=3.0):
     # Standard Deviaiton Method (Univariate)
     mean, std = np.mean(x), np.std(x)
@@ -235,18 +273,38 @@ class MislabelCleaner(object):
         index_test = pd.read_csv(index_test_path).values.reshape(-1)
         clean_path = utils.get_dir(dataset, 'raw', 'mislabel_clean_raw.csv')
         clean = utils.load_df(dataset, clean_path)
-        self.clean_train = clean.loc[index_train, :]
-        self.clean_test = clean.loc[index_test, :]
+        self.clean_train = clean.loc[index_train, :].reset_index(drop=True)
+        self.clean_test = clean.loc[index_test, :].reset_index(drop=True)
 
     def clean(self, dirty_train, dirty_test):
-        indicator_train = pd.DataFrame(np.any(self.clean_train.values != dirty_train.values, axis=1), columns=['indicator'])
-        indicator_test = pd.DataFrame(np.any(self.clean_test.values != dirty_test.values, axis=1), columns=['indicator'])
+        indicator_train = pd.DataFrame(dirty_train.values != self.clean_train.values, columns=dirty_train.columns)
+        indicator_test = pd.DataFrame(dirty_test.values != self.clean_test.values, columns=dirty_train.columns)
+        return self.clean_train, indicator_train, self.clean_test, indicator_test
+
+class MislabelHumanCleaner(object):
+    def __init__(self):
+        super(MislabelHumanCleaner, self).__init__()
+
+    def fit(self, dataset, dirty_train):
+        index_train_path = utils.get_dir(dataset, 'raw', 'idx_train.csv')
+        index_test_path = utils.get_dir(dataset, 'raw', 'idx_test.csv')
+        index_train = pd.read_csv(index_train_path).values.reshape(-1)
+        index_test = pd.read_csv(index_test_path).values.reshape(-1)
+        clean_path = utils.get_dir(dataset, 'raw', 'Humanclean_mislabel_clean.csv')
+        clean = utils.load_df(dataset, clean_path)
+        self.clean_train = clean.loc[index_train, :].reset_index(drop=True)
+        self.clean_test = clean.loc[index_test, :].reset_index(drop=True)
+
+    def clean(self, dirty_train, dirty_test):
+        indicator_train = pd.DataFrame(dirty_train.values != self.clean_train.values, columns=dirty_train.columns)
+        indicator_test = pd.DataFrame(dirty_test.values != self.clean_test.values, columns=dirty_train.columns)
         return self.clean_train, indicator_train, self.clean_test, indicator_test
 
 class AutoERCleaner(object):
     """docstring for AutoERCleaner"""
-    def __init__(self):
+    def __init__(self, remove_mv=True):
         super(AutoERCleaner, self).__init__()
+        self.remove_mv = remove_mv
 
     def fit(self, dataset, dirty_train):
         index_train_path = utils.get_dir(dataset, 'raw', 'idx_train.csv')
@@ -266,19 +324,22 @@ class AutoERCleaner(object):
         dirty_train = pd.read_csv(dirty_train_path)
         dirty_test = pd.read_csv(dirty_test_path)
 
-        train_mv = dirty_train.isnull().values.any(axis=1)
-        test_mv = dirty_test.isnull().values.any(axis=1)
-
-        ind_train = ind_train[train_mv == False]
-        ind_test = ind_test[test_mv == False]
+        if self.remove_mv:
+            train_mv = dirty_train.isnull().values.any(axis=1)
+            test_mv = dirty_test.isnull().values.any(axis=1)
+            ind_train = ind_train[train_mv == False]
+            ind_test = ind_test[test_mv == False]
 
         ind_train = pd.DataFrame(ind_train.reshape(-1, 1), columns=["label"])
         ind_test = pd.DataFrame(ind_test.reshape(-1, 1), columns=["label"])
 
         self.ind_train = ind_train.duplicated(keep="first").values
         self.ind_test = ind_test.duplicated(keep="first").values
+        self.ind_train[ind_train["label"] == -1] = False
+        self.ind_test[ind_test["label"] == -1] = False
 
     def repair(self, df, is_dup):
+        assert len(df) == len(is_dup)
         df_clean = df[is_dup == False]
         return df_clean
 
@@ -338,6 +399,33 @@ class MVHoloCleaner(object):
 
     def fit(self, dataset, df):
         clean_raw_path = utils.get_dir(dataset, 'raw', 'Holoclean_mv_clean.csv')
+        clean_raw = pd.read_csv(clean_raw_path)
+
+        index_train_path = utils.get_dir(dataset, 'raw', 'idx_train.csv')
+        index_test_path = utils.get_dir(dataset, 'raw', 'idx_test.csv')
+        index_train = pd.read_csv(index_train_path).values.reshape(-1)
+        index_test = pd.read_csv(index_test_path).values.reshape(-1)
+
+        self.clean_train = clean_raw.iloc[index_train, :]
+        self.clean_test = clean_raw.iloc[index_test, :]
+
+    def clean(self, dirty_train, dirty_test):
+        indicator_train = self.detect(dirty_train)
+        indicator_test = self.detect(dirty_test)
+
+        clean_train = self.clean_train
+        clean_test =self.clean_test
+        return clean_train, indicator_train, clean_test, indicator_test
+
+class MVHumanCleaner(object):
+    def __init__(self):
+        self.tag = "impute_human"
+   
+    def detect(self, df):
+        return df.isnull()
+
+    def fit(self, dataset, df):
+        clean_raw_path = utils.get_dir(dataset, 'raw', 'Humanclean_mv_clean.csv')
         clean_raw = pd.read_csv(clean_raw_path)
 
         index_train_path = utils.get_dir(dataset, 'raw', 'idx_train.csv')

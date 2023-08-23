@@ -2,15 +2,6 @@
 from .error_type import *
 
 # details of each dataset
-KDD = {
-    "data_dir": "KDD",
-    "error_types": ["missing_values", "outliers"],
-    "label": 'is_exciting_20',
-    "ml_task": "classification",
-    "class_imbalance": True,
-    "categorical_variables":['is_exciting_20'],
-}
-
 Citation = {
     "data_dir": "Citation",
     "error_types": ["duplicates"],
@@ -257,10 +248,26 @@ Credit_minor = {
     "class_imbalance":True
 }
 
+BabyProduct = {
+    "data_dir": "BabyProduct",
+    "error_types": ["missing_values"],
+    "label": "class",
+    "ml_task": "classification"
+}
+
+Clothing = {
+    "data_dir": "Clothing",
+    "error_types": ["mislabel"],
+    "label": "label",
+    "ml_task": "classification"
+}
+
 # domain of dataset 
-datasets = [KDD, Credit, Airbnb, USCensus, EEG, Titanic, 
+datasets = [Credit, Airbnb, USCensus, EEG, Titanic, 
             Marketing, Sensor, Movie, Restaurant, Citation, 
-            Company, University, KDD_uniform, KDD_minor, KDD_major,
-            USCensus_uniform, USCensus_major, USCensus_minor,
-            EEG_uniform, EEG_minor, EEG_major, Titanic_uniform, Titanic_minor, Titanic_major,
-            Marketing_uniform, Marketing_major, Marketing_minor, Credit_uniform, Credit_major, Credit_minor]
+            Company, University, USCensus_uniform, USCensus_major, 
+            USCensus_minor, EEG_uniform, EEG_minor, EEG_major, 
+            Titanic_uniform, Titanic_minor, Titanic_major,
+            Marketing_uniform, Marketing_major, Marketing_minor, 
+            Credit_uniform, Credit_major, Credit_minor, 
+            BabyProduct, Clothing]

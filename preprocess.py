@@ -48,7 +48,7 @@ def drop_variables(X_train, X_test_list, drop_columns):
 
 def down_sample(X, y, random_state):
     rus = RandomUnderSampler(random_state=random_state)
-    X_rus, y_rus = rus.fit_sample(X, y)
+    X_rus, y_rus = rus.fit_resample(X, y)
     indices = rus.sample_indices_
     X_train = X.iloc[indices, :].reset_index(drop=True)
     y_train = y.iloc[indices].reset_index(drop=True)
@@ -61,7 +61,7 @@ def encode_cat_label(y_train, y_test_list):
 
     y = pd.concat([y_train, *y_test_list], axis=0)
     le = LabelEncoder()
-    y = le.fit_transform(y.values)
+    y = le.fit_transform(y.values.ravel())
 
     y_train = y[:n_tr]
     y_test_list = np.split(y[n_tr:], test_split)
@@ -161,4 +161,37 @@ def preprocess(dataset, error_type, train_file, normalize=True, down_sample_seed
         X_test_list = [scaler.transform(X_test) for X_test in X_test_list]
 
     return X_train, y_train, X_test_list, y_test_list, test_files
+
+def preprocess_data(dataset_name, X_train, y_train, X_test_list, y_test_list, normalize=True, down_sample_seed=1):
+    dataset = utils.get_dataset(dataset_name)
+
+    # drop irrelavant features
+    if "drop_variables" in dataset.keys():
+        drop_columns = dataset['drop_variables']
+        drop_variables(X_train, X_test_list, drop_columns)
+
+    # down sample if imbalanced
+    if "class_imbalance" in dataset.keys() and dataset["class_imbalance"]:
+        X_train, y_train = down_sample(X_train, y_train, down_sample_seed)
+
+    # encode label
+    if dataset['ml_task'] == 'classification':
+        y_train, y_test_list = encode_cat_label(y_train, y_test_list)
+
+    # text embedding
+    if "text_variables" in dataset.keys():
+        text_columns = dataset["text_variables"]
+        X_train, X_test_list = encode_text_features(X_train, X_test_list, y_train, text_columns)
+
+    # encode categorical features
+    X_train, X_test_list = encode_cat_features(X_train, X_test_list)
+    
+    # normalize data
+    if normalize:
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test_list = [scaler.transform(X_test) for X_test in X_test_list]
+
+    return X_train, y_train, X_test_list, y_test_list
+
 

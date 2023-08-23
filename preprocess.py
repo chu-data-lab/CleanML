@@ -71,7 +71,7 @@ def text_embedding(corpus_train, corpus_test_list, y_train):
     vectorizer = TfidfVectorizer(stop_words='english')
     x_train_raw = vectorizer.fit_transform(corpus_train)
     x_test_list_raw = [vectorizer.transform(corpus_test) for corpus_test in corpus_test_list]
-    feature_names = vectorizer.get_feature_names()
+    feature_names = vectorizer.get_feature_names_out()
 
     k = min(200, x_train_raw.shape[1])
     ch2 = SelectKBest(chi2, k=k)

@@ -74,7 +74,7 @@ class MVCleaner(object):
 
 class PandasAICleaner:
     def __init__(self, open_ai_api_key="YOUR_API_TOKEN"):
-        self.open_ai_api_key = "dummy" # base64.b64decode("c2stVXNYQ0lYVnQ4Z1E4NzVLWGNqcFpUM0JsYmtGSnJsMkgxU21vUUNMVUE4dlNjME9G")
+        self.open_ai_api_key = "dummy" 
         self.llm = OpenAI(api_token=self.open_ai_api_key)
     
     def fit(self, dataset, dirty_train):

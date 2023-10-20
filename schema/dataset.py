@@ -18,9 +18,18 @@ Marketing = {
     "ml_task": "classification"
 }
 
-Airbnb = {
+Airbnb1 = {
     "data_dir": "Airbnb",
     "error_types": ["duplicates", "outliers", "missing_values"],
+    "label": 'Rating',
+    "categorical_variables": ['Rating'],
+    "ml_task": "classification",
+    'key_columns': ['latitude', 'longitude'],
+}
+
+Airbnb = {
+    "data_dir": "Airbnb",
+    "error_types": ["missing_values"],
     "label": 'Rating',
     "categorical_variables": ['Rating'],
     "ml_task": "classification",

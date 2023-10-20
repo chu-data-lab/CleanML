@@ -1,6 +1,9 @@
 # define the domain of cleaning method
+import base64
 import numpy as np
 import pandas as pd
+from pandasai.llm import OpenAI
+from pandasai import SmartDataframe
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.ensemble import IsolationForest
 from sklearn import preprocessing
@@ -9,6 +12,7 @@ from sklearn.cluster import DBSCAN
 import sys
 import utils
 import os
+
 
 class MVCleaner(object):
     def __init__(self, method='delete', **kwargs):
@@ -68,6 +72,57 @@ class MVCleaner(object):
         clean_test, indicator_test = self.clean_df(dirty_test)
         return clean_train, indicator_train, clean_test, indicator_test
 
+class PandasAICleaner:
+    def __init__(self, open_ai_api_key="YOUR_API_TOKEN"):
+        self.open_ai_api_key = "dummy" # base64.b64decode("c2stVXNYQ0lYVnQ4Z1E4NzVLWGNqcFpUM0JsYmtGSnJsMkgxU21vUUNMVUE4dlNjME9G")
+        self.llm = OpenAI(api_token=self.open_ai_api_key)
+    
+    def fit(self, dataset, dirty_train):
+        # Instantiate an LLM using the provided API key
+        pass
+
+    def detect(self, df):
+        return df.isnull()
+    
+    def clean_df(self, df):    
+        mv_mat = self.detect(df)
+        self.smart_df = SmartDataframe(df, config={"llm": self.llm})
+        df_clean = pd.DataFrame(list(self.smart_df.impute_missing_values()))
+        return df_clean, mv_mat
+    
+    def clean(self, dirty_train, dirty_test):
+        clean_train, indicator_train = self.clean_df(dirty_train) #detect and repair
+        clean_test, indicator_test = self.clean_df(dirty_test)
+        return clean_train, indicator_train, clean_test, indicator_test
+
+
+class MVHoloCleaner(object):
+    def __init__(self):
+        self.tag = "impute_holoclean"
+   
+    def detect(self, df):
+        return df.isnull()
+
+    def fit(self, dataset, df):
+        clean_raw_path = utils.get_dir(dataset, 'raw', 'Holoclean_mv_clean.csv')
+        clean_raw = pd.read_csv(clean_raw_path)
+
+        index_train_path = utils.get_dir(dataset, 'raw', 'idx_train.csv')
+        index_test_path = utils.get_dir(dataset, 'raw', 'idx_test.csv')
+        index_train = pd.read_csv(index_train_path).values.reshape(-1)
+        index_test = pd.read_csv(index_test_path).values.reshape(-1)
+
+        self.clean_train = clean_raw.iloc[index_train, :]
+        self.clean_test = clean_raw.iloc[index_test, :]
+
+    def clean(self, dirty_train, dirty_test):
+        indicator_train = self.detect(dirty_train)
+        indicator_test = self.detect(dirty_test)
+
+        clean_train = self.clean_train
+        clean_test =self.clean_test
+        return clean_train, indicator_train, clean_test, indicator_test
+    
 class DuplicatesCleaner(object):
     def __init__(self):
         super(DuplicatesCleaner, self).__init__()
@@ -390,32 +445,6 @@ class FDCleaner(object):
         clean_test, indicator_test = self.clean_df(dirty_test)
         return clean_train, indicator_train, clean_test, indicator_test
 
-class MVHoloCleaner(object):
-    def __init__(self):
-        self.tag = "impute_holoclean"
-   
-    def detect(self, df):
-        return df.isnull()
-
-    def fit(self, dataset, df):
-        clean_raw_path = utils.get_dir(dataset, 'raw', 'Holoclean_mv_clean.csv')
-        clean_raw = pd.read_csv(clean_raw_path)
-
-        index_train_path = utils.get_dir(dataset, 'raw', 'idx_train.csv')
-        index_test_path = utils.get_dir(dataset, 'raw', 'idx_test.csv')
-        index_train = pd.read_csv(index_train_path).values.reshape(-1)
-        index_test = pd.read_csv(index_test_path).values.reshape(-1)
-
-        self.clean_train = clean_raw.iloc[index_train, :]
-        self.clean_test = clean_raw.iloc[index_test, :]
-
-    def clean(self, dirty_train, dirty_test):
-        indicator_train = self.detect(dirty_train)
-        indicator_test = self.detect(dirty_test)
-
-        clean_train = self.clean_train
-        clean_test =self.clean_test
-        return clean_train, indicator_train, clean_test, indicator_test
 
 class MVHumanCleaner(object):
     def __init__(self):
